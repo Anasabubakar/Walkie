@@ -240,30 +240,54 @@ export const PhysicalRadioFace: React.FC<PhysicalRadioFaceProps> = ({
             <View style={styles.channelRow}>
               <TouchableOpacity
                 onPress={onPreviousChannel}
-                style={styles.channelArrowBtn}
+                disabled={currentChannel.isLocked}
+                style={[styles.channelArrowBtn, currentChannel.isLocked && { opacity: 0.3 }]}
                 accessibilityLabel="Previous Channel"
                 accessibilityRole="button"
               >
-                <Ionicons name="chevron-back" size={28} color="#4ADE80" />
+                <Ionicons name="chevron-back" size={28} color={currentChannel.isLocked ? "#6B7280" : "#4ADE80"} />
               </TouchableOpacity>
 
               <View style={styles.channelCenter}>
-                <Text
-                  style={styles.channelName}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                >
-                  {currentChannel.name.toUpperCase()}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                  {currentChannel.isLocked && (
+                    <Ionicons name="lock-closed" size={18} color="#FBBF24" style={{ marginRight: 6 }} />
+                  )}
+                  {currentChannel.isAllCall && (
+                    <Ionicons name="megaphone" size={18} color="#F59E0B" style={{ marginRight: 6 }} />
+                  )}
+                  <Text
+                    style={[
+                      styles.channelName,
+                      currentChannel.isAllCall ? { color: '#FCD34D' } : undefined,
+                      currentChannel.isLocked ? { color: '#FBBF24' } : undefined
+                    ]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                  >
+                    {currentChannel.name.toUpperCase()}
+                  </Text>
+                </View>
+                {currentChannel.isLocked && (
+                  <Text style={{ color: '#FBBF24', fontSize: 10, fontWeight: '700', letterSpacing: 0.5, marginTop: 2 }}>
+                    LOCKED BY HOST
+                  </Text>
+                )}
+                {currentChannel.isAllCall && (
+                  <Text style={{ color: '#F59E0B', fontSize: 10, fontWeight: '700', letterSpacing: 0.5, marginTop: 2 }}>
+                    BROADCAST • ALL HEAR
+                  </Text>
+                )}
               </View>
 
               <TouchableOpacity
                 onPress={onNextChannel}
-                style={styles.channelArrowBtn}
+                disabled={currentChannel.isLocked}
+                style={[styles.channelArrowBtn, currentChannel.isLocked && { opacity: 0.3 }]}
                 accessibilityLabel="Next Channel"
                 accessibilityRole="button"
               >
-                <Ionicons name="chevron-forward" size={28} color="#4ADE80" />
+                <Ionicons name="chevron-forward" size={28} color={currentChannel.isLocked ? "#6B7280" : "#4ADE80"} />
               </TouchableOpacity>
             </View>
 
@@ -272,9 +296,13 @@ export const PhysicalRadioFace: React.FC<PhysicalRadioFaceProps> = ({
               {isOffline ? (
                 <Text style={styles.statusOfflineText}>[ NO HOST CONNECTION ]</Text>
               ) : isTransmitting ? (
-                <Text style={styles.statusTxText}>● TX: LIVE BROADCASTING</Text>
+                <Text style={[styles.statusTxText, currentChannel.isAllCall && { color: '#FBBF24' }]}>
+                  {currentChannel.isAllCall ? '● TX: ALL CALL (BROADCAST)' : '● TX: LIVE BROADCASTING'}
+                </Text>
               ) : activeSpeaker ? (
-                <Text style={styles.statusRxText}>◄◄ RX: {activeSpeaker.toUpperCase()} ►►</Text>
+                <Text style={styles.statusRxText}>
+                  {currentChannel.isAllCall ? `◄◄ RX ALL-CALL: ${activeSpeaker.toUpperCase()} ►►` : `◄◄ RX: ${activeSpeaker.toUpperCase()} ►►`}
+                </Text>
               ) : isBusy ? (
                 <Text style={styles.statusBusyText}>▲ CHANNEL BUSY</Text>
               ) : (
