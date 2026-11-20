@@ -1,0 +1,13 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "types": ["jest"],
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "expo-walkie-core": ["./modules/expo-walkie-core"]
+    }
+  },
+  "exclude": ["node_modules", "tools", "rust"]
+}
