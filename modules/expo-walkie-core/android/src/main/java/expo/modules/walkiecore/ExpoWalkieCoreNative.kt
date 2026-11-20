@@ -9,6 +9,7 @@ interface ExpoWalkieCoreNativeCallbacks {
     fun onFloorBusy(channelId: String, holderName: String)
     fun onFloorRevoked(channelId: String, leaseId: String, reason: String)
     fun onSpeakerChanged(channelId: String, speakerId: String?, speakerName: String?)
+    fun onChannelLocked(channelId: String, channelName: String, locked: Boolean)
     fun onIncomingAudioFrame(pcmData: ByteArray)
     fun onMemberCountChanged(count: Int)
 }
@@ -49,6 +50,15 @@ object ExpoWalkieCoreNative {
 
     @JvmStatic
     external fun nativeRevokeDevice(deviceId: String, reason: String): Boolean
+
+    @JvmStatic
+    external fun nativeLockMemberChannel(targetDeviceId: String, channelId: String, locked: Boolean): Boolean
+
+    @JvmStatic
+    external fun nativeGetConnectedMembers(): String
+
+    @JvmStatic
+    external fun nativeIsChannelLocked(): Boolean
 
     @JvmStatic
     external fun nativeStartClient(
