@@ -23,6 +23,8 @@ export interface Channel {
   id: string;
   name: string;
   isPreset?: boolean;
+  isLocked?: boolean;
+  isAllCall?: boolean;
 }
 
 export interface ActiveSpeaker {
@@ -30,6 +32,7 @@ export interface ActiveSpeaker {
   speakerId: string;
   speakerName: string;
   startedAt: number;
+  isAllCall?: boolean;
 }
 
 export interface EventConfig {
@@ -45,10 +48,12 @@ export interface ConnectedMember {
   id: string;
   displayName: string;
   channelId: string;
-  connectedAt: number;
-  ipAddress: string;
-  isRevoked: boolean;
-  lastPingAt: number;
+  lockedChannel?: string | null;
+  role?: string;
+  connectedAt?: number;
+  ipAddress?: string;
+  isRevoked?: boolean;
+  lastPingAt?: number;
 }
 
 export type AudioRoute = 'SPEAKER' | 'EARPIECE' | 'BLUETOOTH';
