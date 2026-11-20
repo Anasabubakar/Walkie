@@ -13,6 +13,7 @@ import {
   AudioSettings,
   NetworkDiagnostics,
   WalkieRole,
+  ConnectedMember,
 } from '../types';
 import { FloorStateMachine } from '../state/FloorStateMachine';
 import * as Haptics from 'expo-haptics';
@@ -26,8 +27,11 @@ class WalkieService {
   public connectionState: ConnectionState = 'OFFLINE';
   public floorState: FloorState = 'IDLE';
   public activeSpeaker: string | null = null;
-  public currentChannel: Channel = { id: 'ch_stage', name: 'Stage', isPreset: true };
+  public isLocked: boolean = false;
+  public clientId: string = 'me';
+  public currentChannel: Channel = { id: 'ch_all', name: 'General (All Call)', isPreset: true, isAllCall: true };
   public channels: Channel[] = [
+    { id: 'ch_all', name: 'General (All Call)', isPreset: true, isAllCall: true },
     { id: 'ch_stage', name: 'Stage', isPreset: true },
     { id: 'ch_prod', name: 'Production', isPreset: true },
     { id: 'ch_front', name: 'Front Desk', isPreset: true },
@@ -59,6 +63,12 @@ class WalkieService {
   private nativeSubscriptions: any[] = [];
 
   private constructor() {
+    try {
+      this.clientId = ExpoWalkieCoreModule.getClientId() || 'me';
+    } catch (e) {
+      this.clientId = 'me';
+    }
+
     this.fsm = new FloorStateMachine(
       this.currentChannel.id,
       {
@@ -66,9 +76,9 @@ class WalkieService {
           this.floorState = newState;
           this.notify();
         },
-        sendFloorRequest: () => {
+        sendFloorRequest: (channelId, reqId) => {
           try {
-            ExpoWalkieCoreModule.requestFloor();
+            ExpoWalkieCoreModule.requestFloor(reqId);
           } catch (e) {
             console.warn('[WalkieService] Failed to request floor:', e);
           }
@@ -134,25 +144,30 @@ class WalkieService {
       this.nativeSubscriptions.push(
         emitter.addListener('onFloorChange', (event: any) => {
           if (event.floorState === 'TRANSMITTING') {
+            this.floorState = 'TRANSMITTING';
             this.fsm.handleFloorGrant({
               type: 'FLOOR_GRANT',
-              reqId: '',
-              channelId: event.channelId,
+              reqId: event.reqId || '',
+              channelId: event.channelId || this.currentChannel.id,
               leaseId: event.leaseId || 'native_lease',
               epoch: 1,
-              grantedTo: 'me',
+              grantedTo: this.clientId,
               speakerName: 'Me',
               maxDurationMs: 30000,
             });
           } else if (event.floorState === 'BUSY') {
+            if (event.speakerId && event.speakerId === this.clientId) {
+              return;
+            }
             this.fsm.handleFloorBusy({
               type: 'FLOOR_BUSY',
-              reqId: '',
-              channelId: event.channelId,
-              holderId: 'other',
+              reqId: event.reqId || '',
+              channelId: event.channelId || this.currentChannel.id,
+              holderId: event.speakerId || 'other',
               holderName: event.holderName || 'Another Crew Member',
             });
           } else if (event.floorState === 'IDLE') {
+            this.floorState = 'IDLE';
             this.fsm.releasePtt();
           }
           this.notify();
@@ -161,15 +176,40 @@ class WalkieService {
 
       this.nativeSubscriptions.push(
         emitter.addListener('onSpeakerChange', (event: any) => {
-          if (event.channelId === this.currentChannel.id) {
+          const isRelevantChannel =
+            event.channelId === this.currentChannel.id ||
+            event.channelId === 'ch_all';
+
+          if (isRelevantChannel) {
+            const isMe = event.speakerId && event.speakerId === this.clientId;
+            if (isMe) {
+              return;
+            }
             this.activeSpeaker = event.speakerName || null;
             this.fsm.handleSpeakerUpdate(
               event.channelId,
               event.speakerId,
-              'me'
+              this.clientId
             );
             this.notify();
           }
+        })
+      );
+
+      this.nativeSubscriptions.push(
+        emitter.addListener('onChannelLocked', (event: any) => {
+          const targetCh = this.channels.find(c => c.id === event.channelId) || {
+            id: event.channelId,
+            name: event.channelName || event.channelId,
+            isPreset: true,
+          };
+          this.isLocked = !!event.locked;
+          this.currentChannel = {
+            ...targetCh,
+            isLocked: this.isLocked,
+          };
+          this.fsm.switchChannel(this.currentChannel.id);
+          this.notify();
         })
       );
 
@@ -212,6 +252,10 @@ class WalkieService {
   }
 
   public switchChannel(direction: 'next' | 'prev'): void {
+    if (this.isLocked) {
+      this.runHaptic('BUSY');
+      return;
+    }
     if (this.channels.length === 0) return;
     const currentIndex = this.channels.findIndex((c) => c.id === this.currentChannel.id);
     let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
@@ -224,6 +268,10 @@ class WalkieService {
   }
 
   public selectChannel(channelId: string): void {
+    if (this.isLocked) {
+      this.runHaptic('BUSY');
+      return;
+    }
     const target = this.channels.find((c) => c.id === channelId);
     if (!target || target.id === this.currentChannel.id) return;
 
@@ -380,6 +428,34 @@ class WalkieService {
     try {
       ExpoWalkieCoreModule.revokeMember(clientId, reason);
     } catch (ignored) {}
+  }
+
+  public lockMemberChannel(targetDeviceId: string, channelId: string | null, locked: boolean): boolean {
+    try {
+      return ExpoWalkieCoreModule.lockMemberChannel(targetDeviceId, channelId, locked);
+    } catch (e) {
+      console.warn('[WalkieService] Failed to lock member channel:', e);
+      return false;
+    }
+  }
+
+  public getConnectedMembers(): ConnectedMember[] {
+    try {
+      const list = ExpoWalkieCoreModule.getConnectedMembers();
+      return (list || []).map((m: any) => ({
+        id: m.deviceId,
+        displayName: m.displayName || 'Crew Member',
+        channelId: m.channelId,
+        lockedChannel: m.lockedChannel,
+        role: m.role || 'crew',
+        connectedAt: Date.now(),
+        ipAddress: '192.168.x.x',
+        isRevoked: false,
+        lastPingAt: Date.now(),
+      }));
+    } catch (e) {
+      return [];
+    }
   }
 
   // --- Subscriptions ---
