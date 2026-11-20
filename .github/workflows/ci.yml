@@ -55,10 +55,16 @@ jobs:
       - name: Run Jest test suite
         run: npm test
 
+      - name: Generate Android native project (Expo prebuild)
+        run: npx expo prebuild --platform android --no-install
+
       - name: Cross-compile Rust core for Android
         run: |
           cd rust/walkie-core
           cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -o ../../android/app/src/main/jniLibs build --release
+          cd ../..
+          mkdir -p android/app/src/main/res/drawable
+          cp modules/expo-walkie-core/android/src/main/res/drawable/ic_stat_walkie.xml android/app/src/main/res/drawable/
 
       - name: Generate embedded JavaScript bundle
         run: |
