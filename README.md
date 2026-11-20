@@ -43,7 +43,7 @@
     <img src="https://img.shields.io/badge/⬇_Download_Android_Pilot_APK-v0.2.0-C4F45B?style=for-the-badge&labelColor=101011&logo=android&logoColor=C4F45B" alt="Download Android Pilot APK" height="42">
   </a>
 </p>
-<p><sub>SHA-256: <code>11a39b871e08d838d7bd899b61f6a520ad35fbf00aaa8ef21f7621e01399bf8b</code> · Sideloadable standalone APK with embedded JS bundle & native Rust engine</sub></p>
+<p><sub>SHA-256: <code>bac5825979d4693197c9a25348bb804798ffd7c1c26d77acd1f3edb67c409cf9</code> · Sideloadable standalone APK with embedded JS bundle & native Rust engine</sub></p>
 
 <br>
 
