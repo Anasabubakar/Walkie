@@ -1,0 +1,461 @@
+{"fn":"hashChannelId","args":["﻿bom"],"ok":35632}
+{"fn":"hashChannelId","args":["İstanbul"],"ok":57426}
+{"fn":"hashChannelId","args":[""],"ok":7385}
+{"fn":"hashChannelId","args":["éa..b"],"ok":33828}
+{"fn":"hashChannelId","args":["😀"],"ok":3977}
+{"fn":"hashChannelId","args":["  padded  "],"ok":8626}
+{"fn":"hashChannelId","args":["ab"],"ok":18671}
+{"fn":"hashChannelId","args":["a😀b😀c"],"ok":36724}
+{"fn":"hashChannelId","args":["ünïcödé"],"ok":65136}
+{"fn":"hashChannelId","args":["straßesrc/a/b.ts"],"ok":73}
+{"fn":"hashChannelId","args":["Hello Worldünïcödé"],"ok":46605}
+{"fn":"hashChannelId","args":["emoji 👍🏽 mix"],"ok":1526}
+{"fn":"hashChannelId","args":[":"],"ok":34657}
+{"fn":"hashChannelId","args":["{name} has {count} items"],"ok":57788}
+{"fn":"hashChannelId","args":["key_name-1"],"ok":40134}
+{"fn":"hashChannelId","args":["tab\tseparated"],"ok":10168}
+{"fn":"hashChannelId","args":["src/a/b.ts"],"ok":8883}
+{"fn":"hashChannelId","args":[".leading"],"ok":44012}
+{"fn":"hashChannelId","args":["ünïcödéline1\nline2"],"ok":40959}
+{"fn":"hashChannelId","args":["::"],"ok":43251}
+{"fn":"hashChannelId","args":["a.b.c"],"ok":34049}
+{"fn":"hashChannelId","args":["./x/**/*.jsonhello world"],"ok":15387}
+{"fn":"hashChannelId","args":["./x/**/*.jsonİstanbul"],"ok":9896}
+{"fn":"hashChannelId","args":["trailing."],"ok":44556}
+{"fn":"hashChannelId","args":["日本語のテキスト"],"ok":9649}
+{"fn":"hashChannelId","args":["Hello Worldabc"],"ok":19985}
+{"fn":"hashChannelId","args":["HELLO"],"ok":2399}
+{"fn":"hashChannelId","args":["abc"],"ok":62284}
+{"fn":"hashChannelId","args":[".leadingtrailing."],"ok":26116}
+{"fn":"hashChannelId","args":["ns:key.path"],"ok":62908}
+{"fn":"hashChannelId","args":["HELLOabc"],"ok":63914}
+{"fn":"hashChannelId","args":["é"],"ok":49450}
+{"fn":"hashChannelId","args":["./x/**/*.json"],"ok":35449}
+{"fn":"hashChannelId","args":["abab"],"ok":56976}
+{"fn":"hashChannelId","args":["ahello world"],"ok":24028}
+{"fn":"hashChannelId","args":["a:b:cline1\nline2"],"ok":7902}
+{"fn":"hashChannelId","args":[":é"],"ok":35035}
+{"fn":"hashChannelId","args":["a..b"],"ok":14896}
+{"fn":"hashChannelId","args":["hello"],"ok":25396}
+{"fn":"hashChannelId","args":["ΣΊΣΥΦΟΣ日本語のテキスト"],"ok":4987}
+{"fn":"hashChannelId","args":["Hello Worldhello"],"ok":58120}
+{"fn":"hashChannelId","args":["a"],"ok":52512}
+{"fn":"hashChannelId","args":["straße"],"ok":14112}
+{"fn":"hashChannelId","args":["Hello World"],"ok":38583}
+{"fn":"hashChannelId","args":["éabc"],"ok":5828}
+{"fn":"hashChannelId","args":["src/a/b.ts{name} has {count} items"],"ok":47545}
+{"fn":"hashChannelId","args":["a:b:ctab\tseparated"],"ok":8533}
+{"fn":"hashChannelId","args":["a😀b😀c﻿bom"],"ok":28861}
+{"fn":"hashChannelId","args":["line1\nline2"],"ok":18263}
+{"fn":"hashChannelId","args":["ΣΊΣΥΦΟΣ"],"ok":25527}
+{"fn":"hashChannelId","args":["éünïcödé"],"ok":29052}
+{"fn":"hashChannelId","args":["a:b:ca:b:c"],"ok":20904}
+{"fn":"hashChannelId","args":["./x/**/*.jsona:b:c"],"ok":58973}
+{"fn":"hashChannelId","args":["ababc"],"ok":33851}
+{"fn":"hashChannelId","args":["﻿bom{name} has {count} items"],"ok":46650}
+{"fn":"hashChannelId","args":["ünïcödé.leading"],"ok":13509}
+{"fn":"hashChannelId","args":["hello world"],"ok":59948}
+{"fn":"hashChannelId","args":["line1\nline2src/a/b.ts"],"ok":55778}
+{"fn":"hashChannelId","args":["日本語のテキスト日本語のテキスト"],"ok":37175}
+{"fn":"hashChannelId","args":["Hello Worldns:key.path"],"ok":46141}
+{"fn":"hashChannelId","args":["tab\tseparatedİstanbul"],"ok":26004}
+{"fn":"hashChannelId","args":["ünïcödé:"],"ok":65129}
+{"fn":"hashChannelId","args":["a:b:c"],"ok":5595}
+{"fn":"hashChannelId","args":["line1\nline2😀"],"ok":14955}
+{"fn":"hashChannelId","args":["  padded  tab\tseparated"],"ok":35928}
+{"fn":"hashChannelId","args":["./x/**/*.json﻿bom"],"ok":35317}
+{"fn":"hashChannelId","args":["a😀b😀cHello World"],"ok":23248}
+{"fn":"hashChannelId","args":["HELLOa:b:c"],"ok":21621}
+{"fn":"hashChannelId","args":["HELLOhello world"],"ok":29409}
+{"fn":"hashChannelId","args":[".leadinghello world"],"ok":46871}
+{"fn":"hashChannelId","args":["  padded  a😀b😀c"],"ok":53080}
+{"fn":"hashChannelId","args":["a:b:ca..b"],"ok":44652}
+{"fn":"hashChannelId","args":["a..ba.b.c"],"ok":58692}
+{"fn":"hashChannelId","args":["./x/**/*.jsona"],"ok":44801}
+{"fn":"hashChannelId","args":["line1\nline2HELLO"],"ok":42958}
+{"fn":"hashChannelId","args":[":./x/**/*.json"],"ok":34132}
+{"fn":"hashChannelId","args":["日本語のテキストa"],"ok":60911}
+{"fn":"hashChannelId","args":["é{name} has {count} items"],"ok":49053}
+{"fn":"hashChannelId","args":["abhello world"],"ok":3061}
+{"fn":"hashChannelId","args":["a:b:ckey_name-1"],"ok":15824}
+{"fn":"hashChannelId","args":["./x/**/*.jsonHello World"],"ok":22310}
+{"fn":"hashChannelId","args":["a:b:c  padded  "],"ok":62009}
+{"fn":"hashChannelId","args":["hellotab\tseparated"],"ok":31803}
+{"fn":"hashChannelId","args":["a:b:c﻿bom"],"ok":33089}
+{"fn":"hashChannelId","args":["trailing.é"],"ok":2852}
+{"fn":"hashChannelId","args":["aba.b.c"],"ok":13371}
+{"fn":"hashChannelId","args":["src/a/b.ts  padded  "],"ok":21537}
+{"fn":"hashChannelId","args":["hellokey_name-1"],"ok":49987}
+{"fn":"hashChannelId","args":["aba😀b😀c"],"ok":1814}
+{"fn":"hashChannelId","args":[".leadingns:key.path"],"ok":15722}
+{"fn":"hashChannelId","args":["日本語のテキスト  padded  "],"ok":16721}
+{"fn":"hashChannelId","args":["abca:b:c"],"ok":38994}
+{"fn":"hashChannelId","args":[":.leading"],"ok":43205}
+{"fn":"hashChannelId","args":["ns:key.pathabc"],"ok":32514}
+{"fn":"hashChannelId","args":["key_name-1:"],"ok":45959}
+{"fn":"hashChannelId","args":[".leading./x/**/*.json"],"ok":21250}
+{"fn":"hashChannelId","args":["  padded  ΣΊΣΥΦΟΣ"],"ok":2658}
+{"fn":"hashChannelId","args":["a..bline1\nline2"],"ok":55745}
+{"fn":"hashChannelId","args":["aba:b:c"],"ok":55551}
+{"fn":"hashChannelId","args":["a..b.leading"],"ok":59987}
+{"fn":"hashChannelId","args":["hello.leading"],"ok":35774}
+{"fn":"hashChannelId","args":["emoji 👍🏽 mixa😀b😀c"],"ok":32191}
+{"fn":"hashChannelId","args":["tab\tseparatedab"],"ok":63671}
+{"fn":"hashChannelId","args":["a.b.c日本語のテキスト"],"ok":65294}
+{"fn":"hashChannelId","args":["emoji 👍🏽 mixhello"],"ok":54007}
+{"fn":"hashChannelId","args":["a😀b😀cemoji 👍🏽 mix"],"ok":34983}
+{"fn":"hashChannelId","args":["key_name-1İstanbul"],"ok":21518}
+{"fn":"hashChannelId","args":[":hello"],"ok":5707}
+{"fn":"hashChannelId","args":["emoji 👍🏽 mixns:key.path"],"ok":55583}
+{"fn":"hashChannelId","args":["a..b﻿bom"],"ok":25553}
+{"fn":"hashChannelId","args":["a..b  padded  "],"ok":6268}
+{"fn":"hashChannelId","args":["key_name-1ns:key.path"],"ok":51645}
+{"fn":"hashChannelId","args":["emoji 👍🏽 mix  padded  "],"ok":56222}
+{"fn":"hashChannelId","args":["hello{name} has {count} items"],"ok":49901}
+{"fn":"hashChannelId","args":[":src/a/b.ts"],"ok":20264}
+{"fn":"hashChannelId","args":[":a:b:c"],"ok":12051}
+{"fn":"hashChannelId","args":[":a.b.c"],"ok":16969}
+{"fn":"hashChannelId","args":["ns:key.pathemoji 👍🏽 mix"],"ok":47253}
+{"fn":"hashChannelId","args":["a..bab"],"ok":14735}
+{"fn":"hashChannelId","args":["ns:key.pathé"],"ok":31353}
+{"fn":"hashChannelId","args":["trailing.key_name-1"],"ok":24233}
+{"fn":"hashChannelId","args":["﻿bomab"],"ok":6643}
+{"fn":"hashChannelId","args":["line1\nline2a:b:c"],"ok":18875}
+{"fn":"hashChannelId","args":["  padded  src/a/b.ts"],"ok":62547}
+{"fn":"hashChannelId","args":["line1\nline2hello world"],"ok":29495}
+{"fn":"hashChannelId","args":["日本語のテキストa:b:c"],"ok":8655}
+{"fn":"hashChannelId","args":["tab\tseparatedline1\nline2"],"ok":5080}
+{"fn":"hashChannelId","args":["hello world{name} has {count} items"],"ok":44745}
+{"fn":"hashChannelId","args":["key_name-1a:b:c"],"ok":57600}
+{"fn":"hashChannelId","args":["ΣΊΣΥΦΟΣΣΊΣΥΦΟΣ"],"ok":41961}
+{"fn":"hashChannelId","args":["line1\nline2﻿bom"],"ok":59130}
+{"fn":"hashChannelId","args":["key_name-1tab\tseparated"],"ok":35459}
+{"fn":"hashChannelId","args":["straßeé"],"ok":5424}
+{"fn":"hashChannelId","args":[".leadingstraße"],"ok":1818}
+{"fn":"hashChannelId","args":["hello worldé"],"ok":13863}
+{"fn":"hashChannelId","args":["İstanbula:b:c"],"ok":22455}
+{"fn":"hashChannelId","args":["{name} has {count} itemstab\tseparated"],"ok":18662}
+{"fn":"hashChannelId","args":["😀:"],"ok":14846}
+{"fn":"hashChannelId","args":["İstanbulİstanbul"],"ok":24913}
+{"fn":"hashChannelId","args":["HELLOstraße"],"ok":23691}
+{"fn":"hashChannelId","args":["line1\nline2日本語のテキスト"],"ok":4137}
+{"fn":"hashChannelId","args":["日本語のテキストHello World"],"ok":33464}
+{"fn":"hashChannelId","args":[".leadingtab\tseparated"],"ok":20988}
+{"fn":"hashChannelId","args":["tab\tseparateda"],"ok":31628}
+{"fn":"hashChannelId","args":[".leadingline1\nline2"],"ok":58389}
+{"fn":"hashChannelId","args":["./x/**/*.json.leading"],"ok":60625}
+{"fn":"hashChannelId","args":["a😀b😀c😀"],"ok":48922}
+{"fn":"hashChannelId","args":[":  padded  "],"ok":25523}
+{"fn":"hashChannelId","args":["abtrailing."],"ok":3968}
+{"fn":"hashChannelId","args":["ésrc/a/b.ts"],"ok":9297}
+{"fn":"hashChannelId","args":["a..bHello World"],"ok":18265}
+{"fn":"hashChannelId","args":["trailing.ns:key.path"],"ok":32863}
+{"fn":"hashChannelId","args":["straße日本語のテキスト"],"ok":1196}
+{"fn":"hashChannelId","args":["a..bΣΊΣΥΦΟΣ"],"ok":3915}
+{"fn":"hashChannelId","args":["a..b{name} has {count} items"],"ok":7582}
+{"fn":"hashChannelId","args":["a:b:cns:key.path"],"ok":35801}
+{"fn":"hashChannelId","args":["éa:b:c"],"ok":13871}
+{"fn":"hashChannelId","args":["İstanbulns:key.path"],"ok":26885}
+{"fn":"hashChannelId","args":["tab\tseparatedabc"],"ok":33308}
+{"fn":"hashChannelId","args":["😀  padded  "],"ok":15161}
+{"fn":"hashChannelId","args":["emoji 👍🏽 mixline1\nline2"],"ok":812}
+{"fn":"hashChannelId","args":["a:b:chello world"],"ok":15072}
+{"fn":"hashChannelId","args":["a.b.ca.b.c"],"ok":56247}
+{"fn":"hashChannelId","args":["emoji 👍🏽 mixa:b:c"],"ok":53172}
+{"fn":"hashChannelId","args":["日本語のテキストkey_name-1"],"ok":45833}
+{"fn":"hashChannelId","args":["{name} has {count} itemsstraße"],"ok":65003}
+{"fn":"hashChannelId","args":["HELLOa😀b😀c"],"ok":10463}
+{"fn":"hashChannelId","args":["src/a/b.ts日本語のテキスト"],"ok":6306}
+{"fn":"hashChannelId","args":["a..ba..b"],"ok":15034}
+{"fn":"hashChannelId","args":["a😀b😀ctab\tseparated"],"ok":26786}
+{"fn":"hashChannelId","args":[":😀"],"ok":37083}
+{"fn":"hashChannelId","args":["😀./x/**/*.json"],"ok":28370}
+{"fn":"hashChannelId","args":["  padded  emoji 👍🏽 mix"],"ok":23803}
+{"fn":"hashChannelId","args":["straßetrailing."],"ok":54837}
+{"fn":"hashChannelId","args":["HELLOab"],"ok":30020}
+{"fn":"hashChannelId","args":[".leadingabc"],"ok":7154}
+{"fn":"hashChannelId","args":["straßeİstanbul"],"ok":2685}
+{"fn":"hashChannelId","args":["ΣΊΣΥΦΟΣHELLO"],"ok":59784}
+{"fn":"hashChannelId","args":[".leadingsrc/a/b.ts"],"ok":6021}
+{"fn":"hashChannelId","args":["hello world.leading"],"ok":19468}
+{"fn":"hashChannelId","args":["tab\tseparated./x/**/*.json"],"ok":54721}
+{"fn":"hashChannelId","args":["key_name-1{name} has {count} items"],"ok":2566}
+{"fn":"hashChannelId","args":["line1\nline2./x/**/*.json"],"ok":36201}
+{"fn":"hashChannelId","args":["a😀b😀c{name} has {count} items"],"ok":52934}
+{"fn":"hashChannelId","args":["ab.leading"],"ok":21}
+{"fn":"hashChannelId","args":["emoji 👍🏽 mixemoji 👍🏽 mix"],"ok":49127}
+{"fn":"hashChannelId","args":["abcstraße"],"ok":7280}
+{"fn":"hashChannelId","args":["ünïcödéab"],"ok":27011}
+{"fn":"hashChannelId","args":["a:b:c日本語のテキスト"],"ok":12030}
+{"fn":"hashChannelId","args":["line1\nline2a😀b😀c"],"ok":56975}
+{"fn":"hashChannelId","args":["helloünïcödé"],"ok":46215}
+{"fn":"hashChannelId","args":["ns:key.path:"],"ok":6815}
+{"fn":"hashChannelId","args":["ab{name} has {count} items"],"ok":33647}
+{"fn":"hashChannelId","args":["tab\tseparatedsrc/a/b.ts"],"ok":46804}
+{"fn":"hashChannelId","args":["ΣΊΣΥΦΟΣkey_name-1"],"ok":26210}
+{"fn":"hashChannelId","args":["a😀b😀ca:b:c"],"ok":26905}
+{"fn":"hashChannelId","args":["ΣΊΣΥΦΟΣ﻿bom"],"ok":24218}
+{"fn":"hashChannelId","args":["a😀b😀cHELLO"],"ok":46682}
+{"fn":"hashChannelId","args":["key_name-1ΣΊΣΥΦΟΣ"],"ok":4818}
+{"fn":"hashChannelId","args":[".leading﻿bom"],"ok":14442}
+{"fn":"hashChannelId","args":["héllo wörld"],"ok":3447}
+{"fn":"hashChannelId","args":["👍🏽 thumbs"],"ok":6489}
+{"fn":"hashChannelId","args":["日本語"],"ok":25416}
+{"fn":"hashChannelId","args":["ılık ırmak"],"ok":12420}
+{"fn":"hashChannelId","args":["👨‍👩‍👧 family"],"ok":49392}
+{"fn":"hashChannelId","args":["a b"],"ok":16275}
+{"fn":"hashChannelId","args":["a😀b"],"ok":2763}
+{"fn":"hashChannelId","args":["a²b x½ y①"],"ok":52996}
+{"fn":"hashChannelId","args":["aⅠb Ⅻ"],"ok":24704}
+{"fn":"hashChannelId","args":["a𐐀b 𝐀bc"],"ok":53223}
+{"fn":"hashChannelId","args":["कि ٣٤"],"ok":31859}
+{"fn":"packAudioFrame","args":[100,100,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[3,42,{"$num":"NaN"},{"$num":"-Infinity"},{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"-Infinity"},{"$num":"Infinity"},0.5,10,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[42,-2.5,42,100,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[1,0,100,{"$num":"Infinity"},null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[2147483648,42,{"$num":"-0"},{"$num":"NaN"},"x"],"ok":{"$bytes":[160,0,0,0,0,0,42,0,0,0,0,0,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[{"$num":"-0"},{"$num":"-Infinity"},{"$num":"-Infinity"},-2.5,[]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,0,255,255,255,254]}}
+{"fn":"packAudioFrame","args":[100,{"$num":"Infinity"},2,1000,["a",1]],"ok":{"$bytes":[160,0,100,0,0,0,0,0,0,0,2,0,0,3,232,0,1]}}
+{"fn":"packAudioFrame","args":[0.5,1000000,{"$num":"Infinity"},2,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[3,{"$num":"-Infinity"},100,10,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0.5,{"$num":"-Infinity"},1000000,100,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0.5,1,{"$num":"Infinity"},-1,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1,1000,-1,0,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[42,2147483648,-2.5,{"$num":"Infinity"},true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"-Infinity"},0,3,{"$num":"Infinity"},null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[2147483648,42,2,{"$num":"-Infinity"},null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[3,9007199254740992,1,2,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[1,-2.5,10,-1,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000,1000000,1000000,10,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1,{"$num":"-Infinity"},{"$num":"-0"},{"$num":"NaN"},{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000000,1000,9007199254740992,2,[]],"ok":{"$bytes":[160,66,64,0,0,3,232,0,0,0,0,0,0,0,2]}}
+{"fn":"packAudioFrame","args":[2147483648,-2.5,2,{"$num":"NaN"},[]],"ok":{"$bytes":[160,0,0,255,255,255,254,0,0,0,2,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[2,0,{"$num":"Infinity"},1000,["a",1]],"ok":{"$bytes":[160,0,2,0,0,0,0,0,0,0,0,0,0,3,232,0,1]}}
+{"fn":"packAudioFrame","args":[2,{"$num":"-Infinity"},0.5,2,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0,1000,10,1000,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[42,0.5,42,{"$num":"Infinity"},null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[0,0.5,9007199254740992,100,[]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,0,0,0,0,100]}}
+{"fn":"packAudioFrame","args":[1000000,2,{"$num":"-Infinity"},1000,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"-Infinity"},{"$num":"Infinity"},{"$num":"NaN"},1000000,["a",1]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,0,0,15,66,64,0,1]}}
+{"fn":"packAudioFrame","args":[2147483648,{"$num":"Infinity"},0,0.5,["a",1]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]}}
+{"fn":"packAudioFrame","args":[{"$num":"-Infinity"},-2.5,1,-1,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[3,1000,3,2,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000000,{"$num":"-0"},10,1000,["a",1]],"ok":{"$bytes":[160,66,64,0,0,0,0,0,0,0,10,0,0,3,232,0,1]}}
+{"fn":"packAudioFrame","args":[-1,9007199254740992,1000000,3,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000000,0,2147483648,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1,1000,-2.5,1,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[10,3,{"$num":"Infinity"},-1,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0,{"$num":"NaN"},{"$num":"NaN"},1000,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[2147483648,-1,42,2,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"NaN"},2147483648,3,3,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[9007199254740992,10,100,{"$num":"Infinity"},[]],"ok":{"$bytes":[160,0,0,0,0,0,10,0,0,0,100,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[2147483648,1,100,{"$num":"NaN"},0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0,2,42,{"$num":"-0"},["a",1]],"ok":{"$bytes":[160,0,0,0,0,0,2,0,0,0,42,0,0,0,0,0,1]}}
+{"fn":"packAudioFrame","args":[{"$num":"NaN"},-1,0,9007199254740992,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0.5,{"$num":"NaN"},1000,1000000,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[{"$num":"NaN"},42,-1,{"$num":"NaN"},{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0.5,0,10,{"$num":"-0"},0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[42,3,0,0,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000000,1000000,1000,0,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,{"$num":"NaN"},{"$num":"Infinity"},-2.5,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000,10,2,1000,["a",1]],"ok":{"$bytes":[160,3,232,0,0,0,10,0,0,0,2,0,0,3,232,0,1]}}
+{"fn":"packAudioFrame","args":[42,3,3,1000000,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[3,10,2,0.5,["a",1]],"ok":{"$bytes":[160,0,3,0,0,0,10,0,0,0,2,0,0,0,0,0,1]}}
+{"fn":"packAudioFrame","args":[42,{"$num":"-Infinity"},-2.5,-2.5,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[9007199254740992,42,-2.5,{"$num":"-Infinity"},[]],"ok":{"$bytes":[160,0,0,0,0,0,42,255,255,255,254,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[3,-1,2,1000000,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0,10,1000,1000,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000000,0,1,{"$num":"NaN"},{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[-1,1000000,0,{"$num":"Infinity"},true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[2147483648,1000000,3,100,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[9007199254740992,{"$num":"-Infinity"},{"$num":"-Infinity"},{"$num":"Infinity"},[]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[3,0,{"$num":"-0"},42,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0,{"$num":"NaN"},1000,9007199254740992,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[1,1,9007199254740992,2,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[10,-2.5,{"$num":"NaN"},{"$num":"-0"},{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"Infinity"},10,0.5,{"$num":"NaN"},"x"],"ok":{"$bytes":[160,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[100,-2.5,-1,3,[]],"ok":{"$bytes":[160,0,100,255,255,255,254,255,255,255,255,0,0,0,3]}}
+{"fn":"packAudioFrame","args":[-2.5,0.5,1000000,2147483648,"x"],"ok":{"$bytes":[160,255,254,0,0,0,0,0,15,66,64,128,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[2,1,42,2147483648,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"-Infinity"},-1,{"$num":"Infinity"},42,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[100,{"$num":"-Infinity"},100,{"$num":"Infinity"},["a",1]],"ok":{"$bytes":[160,0,100,0,0,0,0,0,0,0,100,0,0,0,0,0,1]}}
+{"fn":"packAudioFrame","args":[1000,42,100,1000,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0,2,42,1000,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[2147483648,2147483648,{"$num":"-Infinity"},2,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[10,{"$num":"-Infinity"},0.5,-1,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,2,2,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[-1,2,9007199254740992,0,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[9007199254740992,1,9007199254740992,10,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000,10,1000000,9007199254740992,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[42,1000,1000,{"$num":"Infinity"},null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[10,3,0,1000000,"x"],"ok":{"$bytes":[160,0,10,0,0,0,3,0,0,0,0,0,15,66,64,0]}}
+{"fn":"packAudioFrame","args":[0,0.5,0.5,1000,"x"],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,0,0,0,3,232,0]}}
+{"fn":"packAudioFrame","args":[0,{"$num":"-0"},1,2147483648,[]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,1,128,0,0,0]}}
+{"fn":"packAudioFrame","args":[{"$num":"-Infinity"},100,-2.5,1000,"x"],"ok":{"$bytes":[160,0,0,0,0,0,100,255,255,255,254,0,0,3,232,0]}}
+{"fn":"packAudioFrame","args":[0,9007199254740992,100,2,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000,1000,10,{"$num":"-Infinity"},{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[2,{"$num":"NaN"},2,3,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0,9007199254740992,1000,2,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"Infinity"},{"$num":"-0"},1000,{"$num":"-Infinity"},["a",1]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,3,232,0,0,0,0,0,1]}}
+{"fn":"packAudioFrame","args":[1,{"$num":"Infinity"},1000,100,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"-Infinity"},0.5,{"$num":"-Infinity"},1000,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000,100,42,0.5,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000,100,{"$num":"-0"},1000000,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"NaN"},10,42,1000000,[]],"ok":{"$bytes":[160,0,0,0,0,0,10,0,0,0,42,0,15,66,64]}}
+{"fn":"packAudioFrame","args":[{"$num":"-Infinity"},9007199254740992,2147483648,9007199254740992,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[2147483648,1000000,1000,1000,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[2,{"$num":"-Infinity"},1000,10,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[2,1000,10,9007199254740992,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000000,-1,{"$num":"-Infinity"},100,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0,1,1,9007199254740992,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[-2.5,42,10,{"$num":"-0"},{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[10,2147483648,3,2147483648,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[2,{"$num":"-Infinity"},2147483648,0.5,[]],"ok":{"$bytes":[160,0,2,0,0,0,0,128,0,0,0,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[-2.5,0.5,1,{"$num":"Infinity"},[]],"ok":{"$bytes":[160,255,254,0,0,0,0,0,0,0,1,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[1000000,0,0,{"$num":"-Infinity"},{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1,9007199254740992,2147483648,-1,"x"],"ok":{"$bytes":[160,0,1,0,0,0,0,128,0,0,0,255,255,255,255,0]}}
+{"fn":"packAudioFrame","args":[3,1000000,42,-2.5,"x"],"ok":{"$bytes":[160,0,3,0,15,66,64,0,0,0,42,255,255,255,254,0]}}
+{"fn":"packAudioFrame","args":[1000,3,{"$num":"NaN"},42,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[9007199254740992,-1,10,3,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,10,10,42,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0.5,-2.5,10,{"$num":"-0"},"x"],"ok":{"$bytes":[160,0,0,255,255,255,254,0,0,0,10,0,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[{"$num":"Infinity"},{"$num":"-Infinity"},{"$num":"NaN"},0,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[2147483648,{"$num":"-Infinity"},0.5,{"$num":"-0"},{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"Infinity"},1000,0,10,[]],"ok":{"$bytes":[160,0,0,0,0,3,232,0,0,0,0,0,0,0,10]}}
+{"fn":"packAudioFrame","args":[2147483648,-1,10,0.5,[]],"ok":{"$bytes":[160,0,0,255,255,255,255,0,0,0,10,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[-1,1000,2147483648,10,"x"],"ok":{"$bytes":[160,255,255,0,0,3,232,128,0,0,0,0,0,0,10,0]}}
+{"fn":"packAudioFrame","args":[2,-1,2,0.5,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"NaN"},42,{"$num":"Infinity"},2147483648,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"-Infinity"},0.5,-1,1000,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1,1000000,-2.5,1000000,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[{"$num":"-0"},-2.5,{"$num":"-Infinity"},10,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"-0"},1,10,0,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[-1,1000,0,1000,[]],"ok":{"$bytes":[160,255,255,0,0,3,232,0,0,0,0,0,0,3,232]}}
+{"fn":"packAudioFrame","args":[2,-1,2147483648,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"-0"},{"$num":"NaN"},-1,100,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[10,-2.5,0,1000000,[]],"ok":{"$bytes":[160,0,10,255,255,255,254,0,0,0,0,0,15,66,64]}}
+{"fn":"packAudioFrame","args":[3,3,-1,2,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[-2.5,-1,{"$num":"NaN"},-1,[]],"ok":{"$bytes":[160,255,254,255,255,255,255,0,0,0,0,255,255,255,255]}}
+{"fn":"packAudioFrame","args":[3,2147483648,-1,1,[]],"ok":{"$bytes":[160,0,3,128,0,0,0,255,255,255,255,0,0,0,1]}}
+{"fn":"packAudioFrame","args":[3,{"$num":"-0"},{"$num":"Infinity"},10,"x"],"ok":{"$bytes":[160,0,3,0,0,0,0,0,0,0,0,0,0,0,10,0]}}
+{"fn":"packAudioFrame","args":[{"$num":"Infinity"},-2.5,{"$num":"-Infinity"},10,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0,3,3,2147483648,{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,3,100,-2.5,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[{"$num":"-Infinity"},{"$num":"NaN"},9007199254740992,3,"x"],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0]}}
+{"fn":"packAudioFrame","args":[9007199254740992,2147483648,{"$num":"-Infinity"},9007199254740992,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[-1,1000000,42,{"$num":"Infinity"},0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[3,1000000,1,{"$num":"-0"},["a",1]],"ok":{"$bytes":[160,0,3,0,15,66,64,0,0,0,1,0,0,0,0,0,1]}}
+{"fn":"packAudioFrame","args":[100,{"$num":"-Infinity"},2,1,["a",1]],"ok":{"$bytes":[160,0,100,0,0,0,0,0,0,0,2,0,0,0,1,0,1]}}
+{"fn":"packAudioFrame","args":[{"$num":"Infinity"},9007199254740992,2,3,["a",1]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,2,0,0,0,3,0,1]}}
+{"fn":"packAudioFrame","args":[{"$num":"NaN"},9007199254740992,10,1000,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"NaN"},0,9007199254740992,{"$num":"-Infinity"},{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,10,3,2,[]],"ok":{"$bytes":[160,0,100,0,0,0,10,0,0,0,3,0,0,0,2]}}
+{"fn":"packAudioFrame","args":[100,{"$num":"Infinity"},{"$num":"-Infinity"},42,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,-2.5,{"$num":"-Infinity"},{"$num":"-0"},{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[9007199254740992,9007199254740992,{"$num":"Infinity"},{"$num":"NaN"},"x"],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[9007199254740992,{"$num":"-0"},100,0.5,[]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,100,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[1,-1,100,42,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0.5,2147483648,1000000,{"$num":"-0"},"x"],"ok":{"$bytes":[160,0,0,128,0,0,0,0,15,66,64,0,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[42,42,9007199254740992,0,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[2147483648,42,{"$num":"-0"},-2.5,"x"],"ok":{"$bytes":[160,0,0,0,0,0,42,0,0,0,0,255,255,255,254,0]}}
+{"fn":"packAudioFrame","args":[3,0,2,{"$num":"Infinity"},{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[9007199254740992,0.5,-1,1000,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000,10,2147483648,{"$num":"NaN"},null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[0.5,0,100,3,["a",1]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,100,0,0,0,3,0,1]}}
+{"fn":"packAudioFrame","args":[1000000,10,1000000,10,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"-Infinity"},1000000,2147483648,{"$num":"-0"},{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"-0"},-1,2147483648,{"$num":"-0"},0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0,9007199254740992,1,2,["a",1]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,1,0,0,0,2,0,1]}}
+{"fn":"packAudioFrame","args":[{"$num":"Infinity"},0.5,42,100,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[10,-2.5,10,9007199254740992,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[9007199254740992,0.5,0.5,42,"x"],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,0,0,0,0,42,0]}}
+{"fn":"packAudioFrame","args":[{"$num":"Infinity"},1,0,1000,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[2,100,{"$num":"Infinity"},{"$num":"NaN"},null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[-2.5,1,1000000,0,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[9007199254740992,2,1000000,{"$num":"Infinity"},true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[42,1,100,-2.5,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0,10,-1,3,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[-2.5,1000,0.5,1000,true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,-2.5,{"$num":"-Infinity"},1,["a",1]],"ok":{"$bytes":[160,0,100,255,255,255,254,0,0,0,0,0,0,0,1,0,1]}}
+{"fn":"packAudioFrame","args":[1,{"$num":"-Infinity"},42,-1,["a",1]],"ok":{"$bytes":[160,0,1,0,0,0,0,0,0,0,42,255,255,255,255,0,1]}}
+{"fn":"packAudioFrame","args":[42,{"$num":"-0"},-2.5,2,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1000,1000000,-2.5,{"$num":"-0"},true],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[3,{"$num":"-0"},1000000,42,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[10,-1,{"$num":"NaN"},2147483648,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0.5,9007199254740992,9007199254740992,-1,"x"],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,0,255,255,255,255,0]}}
+{"fn":"packAudioFrame","args":[1000,1000000,1,-2.5,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[0,1,-2.5,42,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[10,0.5,{"$num":"NaN"},100,"x"],"ok":{"$bytes":[160,0,10,0,0,0,0,0,0,0,0,0,0,0,100,0]}}
+{"fn":"packAudioFrame","args":[{"$num":"NaN"},{"$num":"-Infinity"},100,100,[]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,100,0,0,0,100]}}
+{"fn":"packAudioFrame","args":[1000000,1000,42,1000,[]],"ok":{"$bytes":[160,66,64,0,0,3,232,0,0,0,42,0,0,3,232]}}
+{"fn":"packAudioFrame","args":[0.5,-1,100,2,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0,9007199254740992,-2.5,1,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[9007199254740992,-2.5,3,0.5,null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[0.5,{"$num":"-0"},{"$num":"NaN"},{"$num":"NaN"},[]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[0.5,2147483648,100,{"$num":"-0"},0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0.5,42,0,-1,"x"],"ok":{"$bytes":[160,0,0,0,0,0,42,0,0,0,0,255,255,255,255,0]}}
+{"fn":"packAudioFrame","args":[2147483648,{"$num":"-Infinity"},0.5,{"$num":"-0"},["a",1]],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]}}
+{"fn":"packAudioFrame","args":[{"$num":"-Infinity"},{"$num":"Infinity"},2,{"$num":"-0"},null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"packAudioFrame","args":[-1,1,-1,0.5,{"a":"b"}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[9007199254740992,-2.5,{"$num":"Infinity"},{"$num":"-Infinity"},{}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[10,{"$num":"-Infinity"},3,{"$num":"Infinity"},"x"],"ok":{"$bytes":[160,0,10,0,0,0,0,0,0,0,3,0,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[9007199254740992,1,42,1000,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[3,3,0,{"$num":"-0"},["a",1]],"ok":{"$bytes":[160,0,3,0,0,0,3,0,0,0,0,0,0,0,0,0,1]}}
+{"fn":"packAudioFrame","args":[-1,1000000,{"$num":"NaN"},0.5,["a",1]],"ok":{"$bytes":[160,255,255,0,15,66,64,0,0,0,0,0,0,0,0,0,1]}}
+{"fn":"packAudioFrame","args":[10,0.5,2147483648,9007199254740992,0],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[10,1,2,{"$num":"NaN"},["a",1]],"ok":{"$bytes":[160,0,10,0,0,0,1,0,0,0,2,0,0,0,0,0,1]}}
+{"fn":"packAudioFrame","args":[2147483648,42,-2.5,{"$num":"NaN"},[]],"ok":{"$bytes":[160,0,0,0,0,0,42,255,255,255,254,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[{"$num":"Infinity"},{"$num":"Infinity"},{"$num":"Infinity"},-1,"x"],"ok":{"$bytes":[160,0,0,0,0,0,0,0,0,0,0,255,255,255,255,0]}}
+{"fn":"packAudioFrame","args":[{"$num":"-Infinity"},10,42,0,"x"],"ok":{"$bytes":[160,0,0,0,0,0,10,0,0,0,42,0,0,0,0,0]}}
+{"fn":"packAudioFrame","args":[2147483648,2,9007199254740992,-2.5,"x"],"ok":{"$bytes":[160,0,0,0,0,0,2,0,0,0,0,255,255,255,254,0]}}
+{"fn":"packAudioFrame","args":[-7.5,100,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0.1,100,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[0.30000000000000004,100,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1e+21,100,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1e-7,100,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[5e-324,100,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[1.7976931348623157e+308,100,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[9007199254740992,100,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[{"$num":"-0"},100,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,-7.5,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,0.1,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,0.30000000000000004,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,1e+21,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,1e-7,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,5e-324,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,1.7976931348623157e+308,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,9007199254740992,10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,{"$num":"-0"},10,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,-7.5,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,0.1,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,0.30000000000000004,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,1e+21,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,1e-7,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,5e-324,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,1.7976931348623157e+308,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,9007199254740992,0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,{"$num":"-0"},0.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,10,-7.5,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,10,0.1,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,10,0.30000000000000004,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,10,1e+21,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,10,1e-7,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,10,5e-324,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,10,1.7976931348623157e+308,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,10,9007199254740992,{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"packAudioFrame","args":[100,100,10,{"$num":"-0"},{"a":{"b":"c"}}],"error":"offset is out of bounds"}
+{"fn":"unpackAudioFrame","args":[null],"error":"Cannot read properties of null (reading 'length')"}
+{"fn":"unpackAudioFrame","args":[{"a":"b"}],"ok":{"header":null,"payload":{"$bytes":[]}}}
+{"fn":"unpackAudioFrame","args":[{"a":{"b":"c"}}],"ok":{"header":null,"payload":{"$bytes":[]}}}
+{"fn":"unpackAudioFrame","args":[{}],"ok":{"header":null,"payload":{"$bytes":[]}}}
+{"fn":"unpackAudioFrame","args":[[]],"ok":{"header":null,"payload":{"$bytes":[]}}}
+{"fn":"unpackAudioFrame","args":[["a",1]],"ok":{"header":null,"payload":{"$bytes":[]}}}
+{"fn":"unpackAudioFrame","args":[true],"ok":{"header":null,"payload":{"$bytes":[]}}}
+{"fn":"unpackAudioFrame","args":[0],"ok":{"header":null,"payload":{"$bytes":[]}}}
+{"fn":"unpackAudioFrame","args":["x"],"ok":{"header":null,"payload":{"$bytes":[]}}}
+{"fn":"hashChannelId","args":["ch_stage"],"ok":15063}
+{"fn":"hashChannelId","args":["ch_prod"],"ok":144}
+{"fn":"packAudioFrame","args":[15063,42,1001,1700000000,{"$bytes":[1,2,3,4,5,6,7,8]}],"ok":{"$bytes":[160,58,215,0,0,0,42,0,0,3,233,101,83,241,0,1,2,3,4,5,6,7,8]}}
+{"fn":"unpackAudioFrame","args":[{"$bytes":[160,58,215,0,0,0,42,0,0,3,233,101,83,241,0,1,2,3,4,5,6,7,8]}],"ok":{"header":{"magic":160,"channelHash":15063,"epoch":42,"seq":1001,"timestamp":1700000000},"payload":{"$bytes":[1,2,3,4,5,6,7,8]}}}
+{"fn":"unpackAudioFrame","args":[{"$bytes":[18,52]}],"ok":{"header":null,"payload":{"$bytes":[]}}}

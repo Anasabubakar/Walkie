@@ -1,0 +1,90 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/home/gamp/Desktop/Projects/Walkie",
+  "unit": "src/protocol/",
+  "language": "ts",
+  "kind": "wasm",
+  "crate_name": "protocol-rs",
+  "exports": [
+    {
+      "name": "hashChannelId",
+      "file": "src/protocol/messages.ts",
+      "line": 136,
+      "params": [
+        {
+          "name": "channelId",
+          "ts_type": "string",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "number",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "packAudioFrame",
+      "file": "src/protocol/messages.ts",
+      "line": 164,
+      "params": [
+        {
+          "name": "channelHash",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "epoch",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "seq",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "timestamp",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "payload",
+          "ts_type": "Uint8Array",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "Uint8Array",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "unpackAudioFrame",
+      "file": "src/protocol/messages.ts",
+      "line": 203,
+      "params": [
+        {
+          "name": "data",
+          "ts_type": "Uint8Array",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "{\n  header: AudioPacketHeader | null;\n  payload: Uint8Array;\n}",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}

@@ -1,0 +1,17 @@
+{
+  "unit": "src/protocol/",
+  "files": 1,
+  "fingerprint": "f97abf9af7a87cf5",
+  "coverage": {
+    "lines": 197,
+    "reached": 197,
+    "files": [
+      {
+        "file": "src/protocol/messages.ts",
+        "lines": 197,
+        "reached": 197,
+        "missed": ""
+      }
+    ]
+  }
+}
