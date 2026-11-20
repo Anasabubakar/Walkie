@@ -11,6 +11,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.IBinder
@@ -43,6 +47,7 @@ class WalkieDutyService : Service() {
 
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var currentChannelName: String = "Stage"
     private var activeSpeakerName: String? = null
     private var isConnected: Boolean = true
@@ -224,9 +229,69 @@ class WalkieDutyService : Service() {
         } catch (e: Exception) {
             Log.w(TAG, "Failed to acquire wifi lock: ${e.message}")
         }
+
+        // Zero-WAN Guarantee: Bind process network to Wi-Fi to prevent Android from bypassing
+        // local Wi-Fi router when the router has no internet connection (no WAN).
+        try {
+            val cm = applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+            if (cm != null) {
+                val builder = NetworkRequest.Builder()
+                    .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                val callback = object : ConnectivityManager.NetworkCallback() {
+                    override fun onAvailable(network: Network) {
+                        super.onAvailable(network)
+                        try {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                cm.bindProcessToNetwork(network)
+                                Log.i(TAG, "Process bound to Wi-Fi for zero-WAN operation: $network")
+                            } else {
+                                @Suppress("DEPRECATION")
+                                ConnectivityManager.setProcessDefaultNetwork(network)
+                            }
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to bind process to Wi-Fi network: ${e.message}")
+                        }
+                    }
+
+                    override fun onLost(network: Network) {
+                        super.onLost(network)
+                        try {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                if (cm.boundNetworkForProcess == network) {
+                                    cm.bindProcessToNetwork(null)
+                                }
+                            } else {
+                                @Suppress("DEPRECATION")
+                                ConnectivityManager.setProcessDefaultNetwork(null)
+                            }
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Error unbinding process from network: ${e.message}")
+                        }
+                    }
+                }
+                networkCallback = callback
+                cm.registerNetworkCallback(builder.build(), callback)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to register Wi-Fi network callback: ${e.message}")
+        }
     }
 
     private fun releaseLocks() {
+        try {
+            val cm = applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                cm?.bindProcessToNetwork(null)
+            } else {
+                @Suppress("DEPRECATION")
+                ConnectivityManager.setProcessDefaultNetwork(null)
+            }
+            networkCallback?.let { cm?.unregisterNetworkCallback(it) }
+            networkCallback = null
+        } catch (e: Exception) {
+            Log.w(TAG, "Error unregistering network callback: ${e.message}")
+        }
+
         try {
             wakeLock?.let {
                 if (it.isHeld) {
