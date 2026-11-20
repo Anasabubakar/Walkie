@@ -58,3 +58,17 @@ export interface NetworkStatusUpdateEvent {
 export interface MemberUpdateEvent {
   connectedCount: number;
 }
+
+export interface ChannelLockedEvent {
+  channelId: string;
+  channelName: string;
+  locked: boolean;
+}
+
+export interface ConnectedMemberPayload {
+  deviceId: string;
+  displayName: string;
+  channelId: string;
+  lockedChannel?: string | null;
+  role?: string;
+}

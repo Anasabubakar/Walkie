@@ -9,6 +9,8 @@ import {
   StateChangeEvent,
   ChannelListUpdateEvent,
   MemberUpdateEvent,
+  ChannelLockedEvent,
+  ConnectedMemberPayload,
 } from './ExpoWalkieCore.types';
 
 declare class ExpoWalkieCoreNativeModule extends NativeModule<{
@@ -18,6 +20,7 @@ declare class ExpoWalkieCoreNativeModule extends NativeModule<{
   onChannelListUpdate: (event: ChannelListUpdateEvent) => void;
   onNetworkStatusUpdate: (event: NetworkStatusUpdateEvent) => void;
   onMemberUpdate: (event: MemberUpdateEvent) => void;
+  onChannelLocked: (event: ChannelLockedEvent) => void;
 }> {
   startHost(eventName: string, channelsJson: string): Promise<EventConfigPayload>;
   stopHost(): Promise<boolean>;
@@ -30,7 +33,7 @@ declare class ExpoWalkieCoreNativeModule extends NativeModule<{
   ): Promise<boolean>;
   leaveEvent(): Promise<boolean>;
   selectChannel(channelId: string): boolean;
-  requestFloor(): boolean;
+  requestFloor(reqId?: string): boolean;
   releaseFloor(): boolean;
   setAudioRoute(route: string): boolean;
   playChirp(type: string): boolean;
@@ -38,6 +41,10 @@ declare class ExpoWalkieCoreNativeModule extends NativeModule<{
   getEventConfig(): EventConfigPayload | null;
   rotateAdmissionToken(): string;
   revokeMember(clientId: string, reason: string): boolean;
+  getClientId(): string;
+  isChannelLocked(): boolean;
+  lockMemberChannel(targetDeviceId: string, channelId: string | null, locked: boolean): boolean;
+  getConnectedMembers(): ConnectedMemberPayload[];
 }
 
 export default requireNativeModule<ExpoWalkieCoreNativeModule>('ExpoWalkieCore');
