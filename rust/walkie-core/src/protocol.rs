@@ -7,6 +7,7 @@ pub const AUDIO_FRAME_MAGIC: u8 = 0xa0;
 pub const AUDIO_HEADER_SIZE: usize = 15;
 pub const MAX_FLOOR_DURATION_MS: u64 = 30000;
 pub const ORPHAN_LEASE_TIMEOUT_MS: u64 = 2000;
+pub const ALL_CALL_CHANNEL_ID: &str = "ch_all";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AudioPacketHeader {
@@ -158,6 +159,17 @@ pub enum ControlMessage {
     ChannelSwitch {
         channel_id: String,
         device_id: String,
+    },
+    #[serde(rename = "LOCK_CHANNEL_REQ")]
+    LockChannelRequest {
+        target_device_id: String,
+        channel_id: Option<String>,
+    },
+    #[serde(rename = "CHANNEL_LOCKED")]
+    ChannelLocked {
+        channel_id: String,
+        channel_name: String,
+        locked: bool,
     },
     #[serde(rename = "MEMBER_JOINED")]
     MemberJoined {
