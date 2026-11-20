@@ -11,7 +11,8 @@ use tokio::sync::{mpsc, Mutex, RwLock};
 use tokio_tungstenite::tungstenite::Message;
 
 use crate::protocol::{
-    hash_channel_id, pack_audio_frame, unpack_audio_frame, ChannelInfo, AUDIO_FRAME_MAGIC,
+    hash_channel_id, pack_audio_frame, unpack_audio_frame, ChannelInfo, ALL_CALL_CHANNEL_ID,
+    AUDIO_FRAME_MAGIC,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -37,6 +38,7 @@ pub trait ClientCallbacks: Send + Sync {
     fn on_floor_busy(&self, channel_id: &str, holder_name: &str);
     fn on_floor_revoked(&self, channel_id: &str, lease_id: &str, reason: &str);
     fn on_speaker_changed(&self, channel_id: &str, speaker_id: Option<&str>, speaker_name: Option<&str>);
+    fn on_channel_locked(&self, channel_id: &str, channel_name: &str, locked: bool);
     fn on_incoming_audio_frame(&self, frame: &[u8]);
     fn on_diagnostics(&self, diag: Diagnostics);
 }
@@ -55,6 +57,7 @@ pub struct WalkieClient {
 
     tx_ws: Arc<Mutex<Option<mpsc::UnboundedSender<Message>>>>,
     is_connected: Arc<AtomicBool>,
+    is_channel_locked: Arc<AtomicBool>,
     seq_number: Arc<AtomicU32>,
 
     packets_sent: Arc<AtomicU64>,
@@ -86,11 +89,20 @@ impl WalkieClient {
             callbacks,
             tx_ws: Arc::new(Mutex::new(None)),
             is_connected: Arc::new(AtomicBool::new(false)),
+            is_channel_locked: Arc::new(AtomicBool::new(false)),
             seq_number: Arc::new(AtomicU32::new(0)),
             packets_sent: Arc::new(AtomicU64::new(0)),
             packets_recv: Arc::new(AtomicU64::new(0)),
             avg_rtt_ms: Arc::new(AtomicU64::new(0)),
         }
+    }
+
+    pub fn is_locked(&self) -> bool {
+        self.is_channel_locked.load(Ordering::SeqCst)
+    }
+
+    pub async fn current_channel_id(&self) -> String {
+        self.current_channel_id.read().await.clone()
     }
 
     pub async fn connect(&self) -> Result<(), String> {
@@ -146,6 +158,8 @@ impl WalkieClient {
         let floor_state = Arc::clone(&self.floor_state);
         let canceled_req_id = Arc::clone(&self.canceled_req_id);
         let current_channel_hash = Arc::clone(&self.current_channel_hash);
+        let current_channel_id = Arc::clone(&self.current_channel_id);
+        let is_channel_locked = Arc::clone(&self.is_channel_locked);
         let current_epoch = Arc::clone(&self.current_epoch);
         let packets_recv = Arc::clone(&self.packets_recv);
         let avg_rtt_ms = Arc::clone(&self.avg_rtt_ms);
@@ -176,16 +190,17 @@ impl WalkieClient {
 
         // Main reader loop
         tokio::spawn(async move {
+            let all_call_hash = hash_channel_id(ALL_CALL_CHANNEL_ID);
+
             while let Some(Ok(msg)) = ws_stream.next().await {
                 match msg {
                     Message::Binary(bin_data) => {
-                        // Incoming audio packet
                         let current_ch_hash = *current_channel_hash.read().await;
                         let ep = current_epoch.load(Ordering::SeqCst);
 
                         if let Some((header, _)) = unpack_audio_frame(&bin_data) {
                             if header.magic == AUDIO_FRAME_MAGIC
-                                && header.channel_hash == current_ch_hash
+                                && (header.channel_hash == current_ch_hash || header.channel_hash == all_call_hash)
                                 && header.epoch == ep
                             {
                                 packets_recv.fetch_add(1, Ordering::SeqCst);
@@ -226,12 +241,8 @@ impl WalkieClient {
                                         let mut state = floor_state.write().await;
                                         let mut canceled = canceled_req_id.write().await;
 
-                                        // CRITICAL INVARIANT CHECK:
-                                        // If user released PTT before grant arrived, state was reset to Idle
-                                        // and canceled is Some(...). Drop grant and immediately send FLOOR_REL!
                                         if *state == ClientFloorState::Idle || canceled.is_some() {
                                             *canceled = None;
-                                            // Send release
                                             let rel_msg = json!({
                                                 "type": "FLOOR_REL",
                                                 "channel_id": ch_id,
@@ -239,14 +250,12 @@ impl WalkieClient {
                                                 "device_id": device_id
                                             }).to_string();
                                             let _ = tx.send(Message::text(rel_msg));
-                                            // NEVER transmit or call on_floor_granted
                                         } else {
                                             *state = ClientFloorState::Transmitting {
                                                 lease_id: lease_id.to_string(),
                                                 epoch: ep,
                                             };
                                             callbacks.on_floor_granted("", ch_id, lease_id, ep);
-                                            callbacks.on_speaker_changed(ch_id, Some(speaker_id), Some(speaker_name));
                                         }
                                     } else {
                                         callbacks.on_speaker_changed(ch_id, Some(speaker_id), Some(speaker_name));
@@ -289,6 +298,23 @@ impl WalkieClient {
                                         }
                                     }
                                     callbacks.on_speaker_changed(ch_id, None, None);
+                                }
+                                "CHANNEL_LOCKED" => {
+                                    let ch_id = val.get("channel_id").and_then(|v| v.as_str()).unwrap_or("");
+                                    let ch_name = val.get("channel_name").and_then(|v| v.as_str()).unwrap_or("");
+                                    let locked = val.get("locked").and_then(|v| v.as_bool()).unwrap_or(false);
+
+                                    is_channel_locked.store(locked, Ordering::SeqCst);
+                                    if locked && !ch_id.is_empty() {
+                                        let ch_hash = hash_channel_id(ch_id);
+                                        {
+                                            let mut ch = current_channel_id.write().await;
+                                            *ch = ch_id.to_string();
+                                            let mut hash = current_channel_hash.write().await;
+                                            *hash = ch_hash;
+                                        }
+                                    }
+                                    callbacks.on_channel_locked(ch_id, ch_name, locked);
                                 }
                                 "PONG" => {
                                     let sent_ts = val.get("timestamp").and_then(|v| v.as_u64()).unwrap_or(0);
@@ -334,7 +360,11 @@ impl WalkieClient {
         Ok(())
     }
 
-    pub async fn select_channel(&self, channel_id: &str) {
+    pub async fn select_channel(&self, channel_id: &str) -> bool {
+        if self.is_channel_locked.load(Ordering::SeqCst) {
+            return false;
+        }
+
         let ch_hash = hash_channel_id(channel_id);
         {
             let mut ch = self.current_channel_id.write().await;
@@ -343,7 +373,6 @@ impl WalkieClient {
             *hash = ch_hash;
         }
 
-        // Release floor if we were transmitting
         self.release_floor().await;
 
         let msg = json!({
@@ -356,6 +385,7 @@ impl WalkieClient {
         if let Some(ref tx) = *tx_lock {
             let _ = tx.send(Message::text(msg));
         }
+        true
     }
 
     pub async fn request_floor(&self, req_id: &str) {
@@ -403,7 +433,6 @@ impl WalkieClient {
                 *state = ClientFloorState::Idle;
             }
             ClientFloorState::Requesting { ref req_id } => {
-                // User released PTT before grant arrived!
                 let mut canceled = self.canceled_req_id.write().await;
                 *canceled = Some(req_id.clone());
                 *state = ClientFloorState::Idle;
@@ -418,7 +447,7 @@ impl WalkieClient {
         let state = self.floor_state.read().await;
         let epoch = match *state {
             ClientFloorState::Transmitting { epoch, .. } => epoch,
-            _ => return false, // Drop audio packet: not transmitting!
+            _ => return false,
         };
         drop(state);
 
