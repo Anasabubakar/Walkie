@@ -223,6 +223,8 @@ export default function App() {
         onStopHost={handleStopHost}
         onRotateToken={handleRotateToken}
         onRevokeMember={handleRevokeMember}
+        onLockMemberChannel={(deviceId, channelId, locked) => service.lockMemberChannel(deviceId, channelId, locked)}
+        getConnectedMembers={() => service.getConnectedMembers()}
       />
 
       {/* Settings & Hardware Diagnostics Modal */}
