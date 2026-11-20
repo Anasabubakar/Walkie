@@ -10,7 +10,7 @@ on:
 
 jobs:
   test-and-build:
-    name: Test & Build Android Release
+    name: Test & Build Android Pilot
     runs-on: ubuntu-latest
 
     steps:
@@ -37,10 +37,10 @@ jobs:
       - name: Install cargo-ndk
         run: cargo install cargo-ndk
 
-      - name: Set up Node.js
+      - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install npm dependencies
@@ -60,6 +60,13 @@ jobs:
           cd rust/walkie-core
           cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -o ../../android/app/src/main/jniLibs build --release
 
+      - name: Generate embedded JavaScript bundle
+        run: |
+          mkdir -p android/app/src/main/assets
+          npx expo export:embed --platform android --dev false --entry-file index.ts \
+            --bundle-output android/app/src/main/assets/index.android.bundle \
+            --assets-dest android/app/src/main/res
+
       - name: Cache Gradle packages
         uses: actions/cache@v4
         with:
@@ -70,15 +77,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build Android Release APK
+      - name: Build Android Pilot APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleDebug --no-daemon
 
-      - name: Upload Release APK Artifact
+      - name: Upload Pilot APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: walkie-release-apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+          name: walkie-pilot-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
