@@ -11,7 +11,7 @@
 
 <p>
   <a href="https://github.com/Anasabubakar/Walkie/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Anasabubakar/Walkie/ci.yml?branch=main&style=for-the-badge&label=CI&logo=githubactions&logoColor=white"></a>
-  <a href="https://github.com/Anasabubakar/Walkie/releases/tag/v0.1.0-pilot.1"><img alt="Latest release" src="https://img.shields.io/github/v/release/Anasabubakar/Walkie?style=for-the-badge&color=C4F45B&labelColor=101011&logo=github&label=RELEASE"></a>
+  <a href="https://github.com/Anasabubakar/Walkie/releases/tag/v0.2.0"><img alt="Latest release" src="https://img.shields.io/github/v/release/Anasabubakar/Walkie?style=for-the-badge&color=C4F45B&labelColor=101011&logo=github&label=RELEASE"></a>
   <a href="#license"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge"></a>
   <a href="https://github.com/Anasabubakar/Walkie/stargazers"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-16A34A?style=for-the-badge"></a>
 </p>
@@ -39,8 +39,8 @@
 <br>
 
 <p>
-  <a href="https://github.com/Anasabubakar/Walkie/releases/download/v0.1.0-pilot.1/walkie-pilot-v0.1.0.apk">
-    <img src="https://img.shields.io/badge/⬇_Download_Android_Pilot_APK-v0.1.0--pilot.1-C4F45B?style=for-the-badge&labelColor=101011&logo=android&logoColor=C4F45B" alt="Download Android Pilot APK" height="42">
+  <a href="https://github.com/Anasabubakar/Walkie/releases/download/v0.2.0/walkie-pilot-v0.2.0.apk">
+    <img src="https://img.shields.io/badge/⬇_Download_Android_Pilot_APK-v0.2.0-C4F45B?style=for-the-badge&labelColor=101011&logo=android&logoColor=C4F45B" alt="Download Android Pilot APK" height="42">
   </a>
 </p>
 <p><sub>SHA-256: <code>11a39b871e08d838d7bd899b61f6a520ad35fbf00aaa8ef21f7621e01399bf8b</code> · Sideloadable standalone APK with embedded JS bundle & native Rust engine</sub></p>
@@ -59,9 +59,11 @@
 
 ## ⚡ Field Highlights
 
-- **[2026-11-20]** **v0.1.0-pilot.1 Android Pilot Release**: Standalone APK with embedded production bundle, 100% native Rust engine (`walkie-core`), zero-transcoding binary audio relay, and the approved Figma "Side Key" identity. [Release notes →](https://github.com/Anasabubakar/Walkie/releases/tag/v0.1.0-pilot.1)
-- **100% Offline Autonomy**: Works on any standard venue Wi-Fi router with the WAN cable completely removed. Zero cloud servers, zero database logins, and zero cellular data consumption.
-- **Authoritative Rust Floor Arbitration**: Single speaker per channel, deterministic FIFO queue promotion, 30s maximum duration cutoff, and 2-second orphan audio timeout.
+- **[2026-11-20]** **v0.2.0 Production Pilot Release**: Standalone APK with embedded production bundle, 100% native Rust engine (`walkie-core`), zero-transcoding binary audio relay, dynamic channel locking, General (All Call) universal broadcast, zero-WAN Wi-Fi process binding, and MIT open-source licensing.
+- **100% Offline Autonomy & Zero-WAN Binding**: Works on any standard venue Wi-Fi router with the WAN cable completely removed. The native duty service binds the Android process to the Wi-Fi network, preventing cellular fallback or packet dropping when the router lacks internet.
+- **General Voice ("All Call" Broadcast)**: Anyone can switch to `ch_all` ("General (All Call)") to broadcast an urgent message heard by all crew members across every channel simultaneously. Channel-specific transmissions remain strictly isolated.
+- **Organizer Channel Locking**: Event hosts can lock specific crew members to designated channels (e.g. locking a sound engineer to "Production"), preventing them from accidentally switching dials or eavesdropping on other channels.
+- **Authoritative Rust Floor Arbitration**: Single speaker per channel, deterministic FIFO queue promotion, 30s maximum duration cutoff, and 2-second orphan audio timeout without phantom busy triggers.
 - **Foreground Duty Service & Background Audio**: Android foreground service (`FOREGROUND_SERVICE_TYPE_MICROPHONE`) holds high-performance Wi-Fi and partial wake locks to maintain uninterrupted audio reception even when the device is locked and screen is asleep.
 
 ---
@@ -301,5 +303,5 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 
 ## 📄 License
 
-Walkie is licensed under the [MIT License](LICENSE).
-Copyright (c) 2026 Walkie Contributors.
+Walkie is open source software licensed under the [MIT License](LICENSE).  
+Copyright (c) 2026 Anas Abubakar &lt;anasabubakar7000@gmail.com&gt;.
