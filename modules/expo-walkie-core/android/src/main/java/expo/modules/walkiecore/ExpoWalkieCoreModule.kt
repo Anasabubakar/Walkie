@@ -47,7 +47,8 @@ class ExpoWalkieCoreModule : Module() {
             "onChannelListUpdate",
             "onNetworkStatusUpdate",
             "onMemberUpdate",
-            "onAudioLevel"
+            "onAudioLevel",
+            "onChannelLocked"
         )
 
         OnCreate {
@@ -82,6 +83,7 @@ class ExpoWalkieCoreModule : Module() {
                         audioEngine?.startCapture()
                         sendEvent("onFloorChange", mapOf(
                             "floorState" to "TRANSMITTING",
+                            "reqId" to reqId,
                             "channelId" to channelId,
                             "leaseId" to leaseId
                         ))
@@ -117,6 +119,21 @@ class ExpoWalkieCoreModule : Module() {
                         updateDutyServiceState(speakerName = speakerName)
                     }
 
+                    override fun onChannelLocked(channelId: String, channelName: String, locked: Boolean) {
+                        if (locked) {
+                            currentChannelId = channelId
+                            if (channelName.isNotEmpty()) {
+                                currentChannelName = channelName
+                            }
+                        }
+                        sendEvent("onChannelLocked", mapOf(
+                            "channelId" to channelId,
+                            "channelName" to channelName,
+                            "locked" to locked
+                        ))
+                        updateDutyServiceState()
+                    }
+
                     override fun onIncomingAudioFrame(pcmData: ByteArray) {
                         audioEngine?.playIncomingAudioFrame(pcmData)
                     }
@@ -140,12 +157,12 @@ class ExpoWalkieCoreModule : Module() {
 
         // --- Core Push-to-Talk & Radio Methods ---
 
-        Function("requestFloor") {
-            val reqId = "req_${System.currentTimeMillis()}"
+        Function("requestFloor") { reqId: String? ->
+            val id = if (!reqId.isNullOrEmpty()) reqId else "req_${System.currentTimeMillis()}"
             if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
-                ExpoWalkieCoreNative.nativeRequestFloor(reqId)
+                ExpoWalkieCoreNative.nativeRequestFloor(id)
             }
-            reqId
+            id
         }
 
         Function("releaseFloor") {
@@ -364,6 +381,45 @@ class ExpoWalkieCoreModule : Module() {
                 ExpoWalkieCoreNative.nativeRevokeDevice(clientIdToRevoke, reason)
             }
             true
+        }
+
+        Function("getClientId") {
+            clientId
+        }
+
+        Function("isChannelLocked") {
+            if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                ExpoWalkieCoreNative.nativeIsChannelLocked()
+            } else false
+        }
+
+        Function("lockMemberChannel") { targetDeviceId: String, channelId: String?, locked: Boolean ->
+            if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                ExpoWalkieCoreNative.nativeLockMemberChannel(targetDeviceId, channelId ?: "", locked)
+            } else false
+        }
+
+        Function("getConnectedMembers") {
+            val membersJson = if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                ExpoWalkieCoreNative.nativeGetConnectedMembers()
+            } else "[]"
+            try {
+                val array = JSONArray(membersJson)
+                val list = mutableListOf<Map<String, Any?>>()
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    list.add(mapOf(
+                        "deviceId" to obj.optString("device_id"),
+                        "displayName" to obj.optString("display_name"),
+                        "channelId" to obj.optString("channel_id"),
+                        "lockedChannel" to if (obj.has("locked_channel") && !obj.isNull("locked_channel")) obj.getString("locked_channel") else null,
+                        "role" to obj.optString("role")
+                    ))
+                }
+                list
+            } catch (e: Exception) {
+                emptyList<Map<String, Any?>>()
+            }
         }
     }
 
