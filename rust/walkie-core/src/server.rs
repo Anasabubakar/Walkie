@@ -14,7 +14,8 @@ use tokio_tungstenite::tungstenite::Message;
 
 use crate::floor::{FloorManager, FloorRequestOutcome};
 use crate::protocol::{
-    unpack_audio_frame, ChannelInfo, ControlMessage, AUDIO_FRAME_MAGIC,
+    hash_channel_id, unpack_audio_frame, ChannelInfo, ControlMessage, ALL_CALL_CHANNEL_ID,
+    AUDIO_FRAME_MAGIC,
 };
 use crate::security::SecurityManager;
 use crate::storage::HostStorage;
@@ -22,9 +23,9 @@ use crate::storage::HostStorage;
 #[derive(Clone)]
 struct ConnectedClient {
     device_id: String,
-    #[allow(dead_code)]
     display_name: String,
     channel_id: String,
+    locked_channel: Option<String>,
     tx: mpsc::UnboundedSender<Message>,
 }
 
@@ -120,7 +121,7 @@ impl WalkieHostServer {
                         };
 
                         for (revoked_grant, reason, next_grant) in expired {
-                            // Notify revoked speaker
+                            let is_all_call = revoked_grant.channel_id == ALL_CALL_CHANNEL_ID;
                             let revoke_msg = json!({
                                 "type": "FLOOR_REVOKE",
                                 "channel_id": revoked_grant.channel_id,
@@ -134,7 +135,7 @@ impl WalkieHostServer {
                             }
 
                             if let Some(next) = next_grant {
-                                // Promoted next speaker
+                                let next_is_all_call = next.channel_id == ALL_CALL_CHANNEL_ID;
                                 let grant_msg = json!({
                                     "type": "FLOOR_GRANT",
                                     "channel_id": next.channel_id,
@@ -149,11 +150,12 @@ impl WalkieHostServer {
                                     "type": "FLOOR_BUSY",
                                     "channel_id": next.channel_id,
                                     "speaker_id": next.speaker_id,
-                                    "speaker_name": next.speaker_name
+                                    "speaker_name": next.speaker_name,
+                                    "is_all_call": next_is_all_call
                                 }).to_string();
 
                                 for client in clients_read.values() {
-                                    if client.channel_id == next.channel_id {
+                                    if next_is_all_call || client.channel_id == next.channel_id {
                                         if client.device_id == next.speaker_id {
                                             let _ = client.tx.send(Message::text(&grant_msg));
                                         } else {
@@ -166,14 +168,13 @@ impl WalkieHostServer {
                                     cb(&next.channel_id, Some(&next.speaker_id), Some(&next.speaker_name));
                                 }
                             } else {
-                                // Channel is now idle
                                 let idle_msg = json!({
                                     "type": "FLOOR_IDLE",
                                     "channel_id": revoked_grant.channel_id
                                 }).to_string();
 
                                 for client in clients_read.values() {
-                                    if client.channel_id == revoked_grant.channel_id {
+                                    if is_all_call || client.channel_id == revoked_grant.channel_id {
                                         let _ = client.tx.send(Message::text(&idle_msg));
                                     }
                                 }
@@ -184,18 +185,20 @@ impl WalkieHostServer {
                             }
                         }
                     }
-                    _ = stop_rx2.recv() => break,
+                    _ = stop_rx2.recv() => {
+                        break;
+                    }
                 }
             }
         });
 
-        // 2. Main accept loop
+        // 2. Accept loop: accepts incoming TCP connections
         tokio::spawn(async move {
-            loop {
+            while is_running.load(Ordering::SeqCst) {
                 tokio::select! {
-                    accept_res = listener.accept() => {
-                        match accept_res {
-                            Ok((stream, peer_addr)) => {
+                    res = listener.accept() => {
+                        match res {
+                            Ok((stream, addr)) => {
                                 let config = Arc::clone(&config);
                                 let floor_manager = Arc::clone(&floor_manager);
                                 let clients = Arc::clone(&clients);
@@ -204,7 +207,7 @@ impl WalkieHostServer {
                                 tokio::spawn(async move {
                                     Self::handle_connection(
                                         stream,
-                                        peer_addr,
+                                        addr,
                                         config,
                                         floor_manager,
                                         clients,
@@ -212,9 +215,7 @@ impl WalkieHostServer {
                                     ).await;
                                 });
                             }
-                            Err(e) => {
-                                eprintln!("Error accepting connection: {}", e);
-                            }
+                            Err(_) => break,
                         }
                     }
                     _ = stop_rx.recv() => {
@@ -222,15 +223,111 @@ impl WalkieHostServer {
                     }
                 }
             }
-            is_running.store(false, Ordering::SeqCst);
         });
 
         Ok(port)
     }
 
+    pub async fn stop(&self) {
+        self.is_running.store(false, Ordering::SeqCst);
+        let _ = self.stop_tx.send(());
+
+        // Notify and disconnect all clients
+        let stop_msg = json!({
+            "type": "HOST_STOPPED",
+            "reason": "Host terminated event"
+        }).to_string();
+
+        let mut clients_write = self.clients.write().await;
+        for (_, client) in clients_write.drain() {
+            let _ = client.tx.send(Message::text(&stop_msg));
+            let _ = client.tx.send(Message::Close(None));
+        }
+    }
+
+    pub async fn revoke_device(&self, device_id: &str, reason: &str) -> bool {
+        self.config.storage.revoke_device(device_id);
+        self.increment_epoch();
+
+        let revoke_msg = json!({
+            "type": "MEMBER_REVOKED",
+            "device_id": device_id,
+            "reason": reason
+        }).to_string();
+
+        let mut clients_write = self.clients.write().await;
+        if let Some(client) = clients_write.remove(device_id) {
+            let _ = client.tx.send(Message::text(&revoke_msg));
+            let _ = client.tx.send(Message::Close(None));
+
+            let now_ms = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis() as u64;
+            let current_ep = self.current_epoch();
+
+            let mut fm = self.floor_manager.lock().await;
+            fm.remove_device(device_id, current_ep, now_ms);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub async fn lock_member_channel(&self, target_device_id: &str, channel_id: Option<&str>) -> bool {
+        let mut clients_write = self.clients.write().await;
+        if let Some(target) = clients_write.get_mut(target_device_id) {
+            target.locked_channel = channel_id.map(|s| s.to_string());
+            if let Some(ch_id) = channel_id {
+                target.channel_id = ch_id.to_string();
+                let ch_name = self
+                    .config
+                    .channels
+                    .iter()
+                    .find(|c| c.id == ch_id)
+                    .map(|c| c.name.clone())
+                    .unwrap_or_else(|| ch_id.to_string());
+                let locked_msg = json!({
+                    "type": "CHANNEL_LOCKED",
+                    "channel_id": ch_id,
+                    "channel_name": ch_name,
+                    "locked": true
+                }).to_string();
+                let _ = target.tx.send(Message::text(locked_msg));
+            } else {
+                let unlocked_msg = json!({
+                    "type": "CHANNEL_LOCKED",
+                    "channel_id": target.channel_id,
+                    "channel_name": "",
+                    "locked": false
+                }).to_string();
+                let _ = target.tx.send(Message::text(unlocked_msg));
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    pub async fn get_connected_members_json(&self) -> String {
+        let clients_read = self.clients.read().await;
+        let list: Vec<serde_json::Value> = clients_read
+            .values()
+            .map(|c| {
+                json!({
+                    "deviceId": c.device_id,
+                    "displayName": c.display_name,
+                    "channelId": c.channel_id,
+                    "lockedChannel": c.locked_channel
+                })
+            })
+            .collect();
+        serde_json::to_string(&list).unwrap_or_else(|_| "[]".to_string())
+    }
+
     async fn handle_connection(
         stream: TcpStream,
-        peer_addr: SocketAddr,
+        _addr: SocketAddr,
         config: Arc<ServerConfig>,
         floor_manager: Arc<Mutex<FloorManager>>,
         clients: Arc<RwLock<HashMap<String, ConnectedClient>>>,
@@ -238,16 +335,13 @@ impl WalkieHostServer {
     ) {
         let ws_stream = match tokio_tungstenite::accept_async(stream).await {
             Ok(ws) => ws,
-            Err(e) => {
-                eprintln!("WebSocket handshake failed from {}: {}", peer_addr, e);
-                return;
-            }
+            Err(_) => return,
         };
 
         let (mut ws_sink, mut ws_stream) = ws_stream.split();
         let (tx, mut rx) = mpsc::unbounded_channel::<Message>();
 
-        // Spawn writer pump
+        // Writer pump
         tokio::spawn(async move {
             while let Some(msg) = rx.recv().await {
                 if ws_sink.send(msg).await.is_err() {
@@ -256,7 +350,7 @@ impl WalkieHostServer {
             }
         });
 
-        // Handshake: first message must be AUTH_REQ within 5 seconds
+        // Initial Auth Handshake
         let auth_future = ws_stream.next();
         let auth_msg = match tokio::time::timeout(Duration::from_secs(5), auth_future).await {
             Ok(Some(Ok(Message::Text(text)))) => text,
@@ -292,7 +386,6 @@ impl WalkieHostServer {
                 channel_id,
                 ..
             } => {
-                // Verify admission token
                 if let Err(err) = config.security.verify_admission_token(&admission_token) {
                     let err_msg = json!({
                         "type": "AUTH_RESP",
@@ -303,7 +396,6 @@ impl WalkieHostServer {
                     return;
                 }
 
-                // Check revoked devices
                 if config.storage.is_device_revoked(&device_id) {
                     let err_msg = json!({
                         "type": "AUTH_RESP",
@@ -342,6 +434,7 @@ impl WalkieHostServer {
             device_id: device_id.clone(),
             display_name: display_name.clone(),
             channel_id: initial_channel.clone(),
+            locked_channel: None,
             tx: tx.clone(),
         };
 
@@ -364,7 +457,7 @@ impl WalkieHostServer {
         }).to_string();
         let _ = tx.send(Message::text(auth_resp));
 
-        // If initial channel has active speaker, send FLOOR_BUSY to this client
+        // If initial channel has active speaker, inform the newly connected client
         {
             let fm = floor_manager.lock().await;
             if let Some((speaker_id, speaker_name)) = fm.get_active_speaker(&initial_channel) {
@@ -372,17 +465,19 @@ impl WalkieHostServer {
                     "type": "FLOOR_BUSY",
                     "channel_id": initial_channel,
                     "speaker_id": speaker_id,
-                    "speaker_name": speaker_name
+                    "speaker_name": speaker_name,
+                    "is_all_call": false
                 }).to_string();
                 let _ = tx.send(Message::text(busy_msg));
             }
         }
 
+        let all_call_hash = hash_channel_id(ALL_CALL_CHANNEL_ID);
+
         // Reader pump: processes client messages
         while let Some(Ok(msg)) = ws_stream.next().await {
             match msg {
                 Message::Binary(bin_data) => {
-                    // Audio relay packet
                     let now_ms = SystemTime::now()
                         .duration_since(UNIX_EPOCH)
                         .unwrap_or_default()
@@ -391,10 +486,13 @@ impl WalkieHostServer {
 
                     if let Some((header, _)) = unpack_audio_frame(&bin_data) {
                         if header.magic == AUDIO_FRAME_MAGIC && header.epoch == current_ep {
-                            // Verify floor lease
+                            let is_all_call = header.channel_hash == all_call_hash;
+
                             let can_transmit = {
                                 let mut fm = floor_manager.lock().await;
-                                let channel_id = {
+                                let channel_id = if is_all_call {
+                                    ALL_CALL_CHANNEL_ID.to_string()
+                                } else {
                                     let clients_read = clients.read().await;
                                     clients_read
                                         .get(&device_id)
@@ -405,7 +503,6 @@ impl WalkieHostServer {
                             };
 
                             if can_transmit {
-                                // Zero-transcoding broadcast to channel subscribers
                                 let clients_read = clients.read().await;
                                 let sender_channel = clients_read
                                     .get(&device_id)
@@ -413,8 +510,10 @@ impl WalkieHostServer {
                                     .unwrap_or("");
 
                                 for (id, c) in clients_read.iter() {
-                                    if id != &device_id && c.channel_id == sender_channel {
-                                        let _ = c.tx.send(Message::binary(bin_data.clone()));
+                                    if id != &device_id {
+                                        if is_all_call || c.channel_id == sender_channel {
+                                            let _ = c.tx.send(Message::binary(bin_data.clone()));
+                                        }
                                     }
                                 }
                             }
@@ -436,6 +535,7 @@ impl WalkieHostServer {
                                 device_id: req_dev,
                             } => {
                                 if req_dev == device_id {
+                                    let is_all_call = channel_id == ALL_CALL_CHANNEL_ID;
                                     let outcome = {
                                         let mut fm = floor_manager.lock().await;
                                         fm.request_floor(
@@ -457,19 +557,21 @@ impl WalkieHostServer {
                                                 "speaker_id": grant.speaker_id,
                                                 "speaker_name": grant.speaker_name,
                                                 "epoch": grant.epoch,
-                                                "expires_at": grant.expires_at_ms
+                                                "expires_at": grant.expires_at_ms,
+                                                "is_all_call": is_all_call
                                             }).to_string();
 
                                             let busy_msg = json!({
                                                 "type": "FLOOR_BUSY",
                                                 "channel_id": grant.channel_id,
                                                 "speaker_id": grant.speaker_id,
-                                                "speaker_name": grant.speaker_name
+                                                "speaker_name": grant.speaker_name,
+                                                "is_all_call": is_all_call
                                             }).to_string();
 
                                             let clients_read = clients.read().await;
                                             for c in clients_read.values() {
-                                                if c.channel_id == grant.channel_id {
+                                                if is_all_call || c.channel_id == grant.channel_id {
                                                     if c.device_id == device_id {
                                                         let _ = c.tx.send(Message::text(&grant_msg));
                                                     } else {
@@ -490,7 +592,8 @@ impl WalkieHostServer {
                                                 "type": "FLOOR_BUSY",
                                                 "channel_id": channel_id,
                                                 "speaker_id": speaker_id,
-                                                "speaker_name": speaker_name
+                                                "speaker_name": speaker_name,
+                                                "is_all_call": is_all_call
                                             }).to_string();
                                             let _ = tx.send(Message::text(busy_msg));
                                         }
@@ -503,6 +606,7 @@ impl WalkieHostServer {
                                 device_id: rel_dev,
                             } => {
                                 if rel_dev == device_id {
+                                    let is_all_call = channel_id == ALL_CALL_CHANNEL_ID;
                                     let (released, next_grant) = {
                                         let mut fm = floor_manager.lock().await;
                                         fm.release_floor(
@@ -517,6 +621,7 @@ impl WalkieHostServer {
                                     if released {
                                         let clients_read = clients.read().await;
                                         if let Some(next) = next_grant {
+                                            let next_is_all_call = next.channel_id == ALL_CALL_CHANNEL_ID;
                                             let grant_msg = json!({
                                                 "type": "FLOOR_GRANT",
                                                 "channel_id": next.channel_id,
@@ -524,18 +629,20 @@ impl WalkieHostServer {
                                                 "speaker_id": next.speaker_id,
                                                 "speaker_name": next.speaker_name,
                                                 "epoch": next.epoch,
-                                                "expires_at": next.expires_at_ms
+                                                "expires_at": next.expires_at_ms,
+                                                "is_all_call": next_is_all_call
                                             }).to_string();
 
                                             let busy_msg = json!({
                                                 "type": "FLOOR_BUSY",
                                                 "channel_id": next.channel_id,
                                                 "speaker_id": next.speaker_id,
-                                                "speaker_name": next.speaker_name
+                                                "speaker_name": next.speaker_name,
+                                                "is_all_call": next_is_all_call
                                             }).to_string();
 
                                             for c in clients_read.values() {
-                                                if c.channel_id == next.channel_id {
+                                                if next_is_all_call || c.channel_id == next.channel_id {
                                                     if c.device_id == next.speaker_id {
                                                         let _ = c.tx.send(Message::text(&grant_msg));
                                                     } else {
@@ -554,7 +661,7 @@ impl WalkieHostServer {
                                             }).to_string();
 
                                             for c in clients_read.values() {
-                                                if c.channel_id == channel_id {
+                                                if is_all_call || c.channel_id == channel_id {
                                                     let _ = c.tx.send(Message::text(&idle_msg));
                                                 }
                                             }
@@ -571,7 +678,32 @@ impl WalkieHostServer {
                                 device_id: sw_dev,
                             } => {
                                 if sw_dev == device_id {
-                                    // Release floor on any old channel
+                                    // Check if channel is locked by host!
+                                    let is_locked = {
+                                        let clients_read = clients.read().await;
+                                        clients_read.get(&device_id).and_then(|c| c.locked_channel.clone())
+                                    };
+
+                                    if let Some(ref locked_ch) = is_locked {
+                                        if new_channel != *locked_ch {
+                                            let ch_name = config
+                                                .channels
+                                                .iter()
+                                                .find(|c| c.id == *locked_ch)
+                                                .map(|c| c.name.clone())
+                                                .unwrap_or_else(|| locked_ch.clone());
+                                            let locked_msg = json!({
+                                                "type": "CHANNEL_LOCKED",
+                                                "channel_id": locked_ch,
+                                                "channel_name": ch_name,
+                                                "locked": true
+                                            }).to_string();
+                                            let _ = tx.send(Message::text(locked_msg));
+                                            continue;
+                                        }
+                                    }
+
+                                    // Release floor on old channel
                                     let vacated = {
                                         let mut fm = floor_manager.lock().await;
                                         fm.remove_device(&device_id, current_ep, now_ms)
@@ -580,6 +712,7 @@ impl WalkieHostServer {
                                     let clients_read = clients.read().await;
                                     for (vac_ch, _, next_grant) in vacated {
                                         if let Some(next) = next_grant {
+                                            let next_is_all_call = next.channel_id == ALL_CALL_CHANNEL_ID;
                                             let grant_msg = json!({
                                                 "type": "FLOOR_GRANT",
                                                 "channel_id": next.channel_id,
@@ -587,18 +720,20 @@ impl WalkieHostServer {
                                                 "speaker_id": next.speaker_id,
                                                 "speaker_name": next.speaker_name,
                                                 "epoch": next.epoch,
-                                                "expires_at": next.expires_at_ms
+                                                "expires_at": next.expires_at_ms,
+                                                "is_all_call": next_is_all_call
                                             }).to_string();
 
                                             let busy_msg = json!({
                                                 "type": "FLOOR_BUSY",
                                                 "channel_id": next.channel_id,
                                                 "speaker_id": next.speaker_id,
-                                                "speaker_name": next.speaker_name
+                                                "speaker_name": next.speaker_name,
+                                                "is_all_call": next_is_all_call
                                             }).to_string();
 
                                             for c in clients_read.values() {
-                                                if c.channel_id == vac_ch {
+                                                if next_is_all_call || c.channel_id == vac_ch {
                                                     if c.device_id == next.speaker_id {
                                                         let _ = c.tx.send(Message::text(&grant_msg));
                                                     } else {
@@ -644,9 +779,43 @@ impl WalkieHostServer {
                                             "type": "FLOOR_BUSY",
                                             "channel_id": new_channel,
                                             "speaker_id": spk_id,
-                                            "speaker_name": spk_name
+                                            "speaker_name": spk_name,
+                                            "is_all_call": false
                                         }).to_string();
                                         let _ = tx.send(Message::text(busy_msg));
+                                    }
+                                }
+                            }
+                            ControlMessage::LockChannelRequest {
+                                target_device_id,
+                                channel_id: lock_target_ch,
+                            } => {
+                                let mut clients_write = clients.write().await;
+                                if let Some(target) = clients_write.get_mut(&target_device_id) {
+                                    target.locked_channel = lock_target_ch.clone();
+                                    if let Some(ref ch_id) = lock_target_ch {
+                                        target.channel_id = ch_id.clone();
+                                        let ch_name = config
+                                            .channels
+                                            .iter()
+                                            .find(|c| c.id == *ch_id)
+                                            .map(|c| c.name.clone())
+                                            .unwrap_or_else(|| ch_id.clone());
+                                        let locked_msg = json!({
+                                            "type": "CHANNEL_LOCKED",
+                                            "channel_id": ch_id,
+                                            "channel_name": ch_name,
+                                            "locked": true
+                                        }).to_string();
+                                        let _ = target.tx.send(Message::text(locked_msg));
+                                    } else {
+                                        let unlocked_msg = json!({
+                                            "type": "CHANNEL_LOCKED",
+                                            "channel_id": target.channel_id,
+                                            "channel_name": "",
+                                            "locked": false
+                                        }).to_string();
+                                        let _ = target.tx.send(Message::text(unlocked_msg));
                                     }
                                 }
                             }
@@ -689,7 +858,9 @@ impl WalkieHostServer {
 
         let clients_read = clients.read().await;
         for (vac_ch, _, next_grant) in vacated {
+            let is_all_call = vac_ch == ALL_CALL_CHANNEL_ID;
             if let Some(next) = next_grant {
+                let next_is_all_call = next.channel_id == ALL_CALL_CHANNEL_ID;
                 let grant_msg = json!({
                     "type": "FLOOR_GRANT",
                     "channel_id": next.channel_id,
@@ -697,18 +868,20 @@ impl WalkieHostServer {
                     "speaker_id": next.speaker_id,
                     "speaker_name": next.speaker_name,
                     "epoch": next.epoch,
-                    "expires_at": next.expires_at_ms
+                    "expires_at": next.expires_at_ms,
+                    "is_all_call": next_is_all_call
                 }).to_string();
 
                 let busy_msg = json!({
                     "type": "FLOOR_BUSY",
                     "channel_id": next.channel_id,
                     "speaker_id": next.speaker_id,
-                    "speaker_name": next.speaker_name
+                    "speaker_name": next.speaker_name,
+                    "is_all_call": next_is_all_call
                 }).to_string();
 
                 for c in clients_read.values() {
-                    if c.channel_id == vac_ch {
+                    if next_is_all_call || c.channel_id == next.channel_id {
                         if c.device_id == next.speaker_id {
                             let _ = c.tx.send(Message::text(&grant_msg));
                         } else {
@@ -718,7 +891,7 @@ impl WalkieHostServer {
                 }
 
                 if let Some(ref cb) = config.on_speaker_changed {
-                    cb(&vac_ch, Some(&next.speaker_id), Some(&next.speaker_name));
+                    cb(&next.channel_id, Some(&next.speaker_id), Some(&next.speaker_name));
                 }
             } else {
                 let idle_msg = json!({
@@ -727,7 +900,7 @@ impl WalkieHostServer {
                 }).to_string();
 
                 for c in clients_read.values() {
-                    if c.channel_id == vac_ch {
+                    if is_all_call || c.channel_id == vac_ch {
                         let _ = c.tx.send(Message::text(&idle_msg));
                     }
                 }
@@ -737,24 +910,5 @@ impl WalkieHostServer {
                 }
             }
         }
-    }
-
-    pub async fn revoke_device(&self, device_id: &str, reason: &str) {
-        self.config.storage.revoke_device(device_id);
-
-        let clients_read = self.clients.read().await;
-        if let Some(client) = clients_read.get(device_id) {
-            let msg = json!({
-                "type": "MEMBER_REVOKED",
-                "reason": reason
-            }).to_string();
-            let _ = client.tx.send(Message::text(msg));
-            let _ = client.tx.send(Message::Close(None));
-        }
-    }
-
-    pub fn stop(&self) {
-        let _ = self.stop_tx.send(());
-        self.is_running.store(false, Ordering::SeqCst);
     }
 }
