@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
-import { Channel, EventConfig } from '../types';
+import { Channel, EventConfig, ConnectedMember } from '../types';
 import { WalkieLockup, SideKeyMark, BRAND_COLORS } from './WalkieBrand';
 
 interface HostEventModalProps {
@@ -31,6 +31,8 @@ interface HostEventModalProps {
   onStopHost: () => Promise<void>;
   onRotateToken: () => void;
   onRevokeMember: (clientId: string) => void;
+  onLockMemberChannel?: (targetDeviceId: string, channelId: string | null, locked: boolean) => boolean;
+  getConnectedMembers?: () => ConnectedMember[];
 }
 
 export const HostEventModal: React.FC<HostEventModalProps> = ({
@@ -44,10 +46,24 @@ export const HostEventModal: React.FC<HostEventModalProps> = ({
   onStopHost,
   onRotateToken,
   onRevokeMember,
+  onLockMemberChannel,
+  getConnectedMembers,
 }) => {
   const [eventName, setEventName] = useState('Stage Crew Main');
   const [newChannelName, setNewChannelName] = useState('');
   const [starting, setStarting] = useState(false);
+  const [membersList, setMembersList] = useState<ConnectedMember[]>([]);
+
+  // Periodically refresh connected members when hosting and modal is visible
+  React.useEffect(() => {
+    if (visible && isHosting && getConnectedMembers) {
+      setMembersList(getConnectedMembers());
+      const interval = setInterval(() => {
+        setMembersList(getConnectedMembers());
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [visible, isHosting, getConnectedMembers]);
 
   // Invite payload encoded in the QR code
   const inviteQrData = eventConfig
@@ -202,6 +218,79 @@ export const HostEventModal: React.FC<HostEventModalProps> = ({
                       {eventConfig?.hostFingerprint || 'e3b0c442...'}
                     </Text>
                   </View>
+                </View>
+
+                {/* Connected Crew & Channel Lock Controls */}
+                <View style={styles.crewSection}>
+                  <Text style={styles.sectionHeader}>Crew Channels & Locking ({membersList.length})</Text>
+                  <Text style={styles.crewHelpText}>
+                    Lock a crew member to a specific channel so they only transmit and listen on that channel.
+                  </Text>
+                  {membersList.length === 0 ? (
+                    <Text style={styles.noCrewText}>No other crew devices connected yet</Text>
+                  ) : (
+                    membersList.map((m) => (
+                      <View key={m.id} style={styles.crewCard}>
+                        <View style={styles.crewCardHeader}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons name="phone-portrait-outline" size={16} color="#4ADE80" style={{ marginRight: 6 }} />
+                            <Text style={styles.crewNameText}>{m.displayName}</Text>
+                          </View>
+                          {m.lockedChannel ? (
+                            <View style={styles.lockedBadge}>
+                              <Ionicons name="lock-closed" size={12} color="#FBBF24" style={{ marginRight: 4 }} />
+                              <Text style={styles.lockedBadgeText}>LOCKED</Text>
+                            </View>
+                          ) : (
+                            <Text style={styles.unlockedText}>Unlocked</Text>
+                          )}
+                        </View>
+
+                        {/* Channel selector chips */}
+                        <View style={styles.channelChipRow}>
+                          {channels.filter(c => !c.isAllCall).map((ch) => {
+                            const isChLocked = m.lockedChannel === ch.id;
+                            return (
+                              <TouchableOpacity
+                                key={ch.id}
+                                style={[styles.channelChip, isChLocked && styles.channelChipActive]}
+                                onPress={() => {
+                                  if (onLockMemberChannel) {
+                                    if (isChLocked) {
+                                      onLockMemberChannel(m.id, null, false);
+                                    } else {
+                                      onLockMemberChannel(m.id, ch.id, true);
+                                    }
+                                    if (getConnectedMembers) setMembersList(getConnectedMembers());
+                                  }
+                                }}
+                              >
+                                {isChLocked && (
+                                  <Ionicons name="lock-closed" size={10} color="#0B0D0F" style={{ marginRight: 3 }} />
+                                )}
+                                <Text style={[styles.channelChipText, isChLocked && styles.channelChipTextActive]}>
+                                  {ch.name}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                          {m.lockedChannel && (
+                            <TouchableOpacity
+                              style={styles.unlockChip}
+                              onPress={() => {
+                                if (onLockMemberChannel) {
+                                  onLockMemberChannel(m.id, null, false);
+                                  if (getConnectedMembers) setMembersList(getConnectedMembers());
+                                }
+                              }}
+                            >
+                              <Text style={styles.unlockChipText}>Unlock</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </View>
+                    ))
+                  )}
                 </View>
 
                 {/* Action Controls */}
@@ -447,5 +536,101 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#60A5FA',
+  },
+  crewSection: {
+    width: '100%',
+    marginTop: 18,
+  },
+  crewHelpText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  noCrewText: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontStyle: 'italic',
+    paddingVertical: 8,
+  },
+  crewCard: {
+    backgroundColor: '#1E222A',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#2F3442',
+    marginBottom: 8,
+  },
+  crewCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  crewNameText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#F3F4F6',
+  },
+  lockedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  lockedBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#FBBF24',
+  },
+  unlockedText: {
+    fontSize: 11,
+    color: '#6B7280',
+  },
+  channelChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    alignItems: 'center',
+  },
+  channelChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#111317',
+    borderWidth: 1,
+    borderColor: '#374151',
+  },
+  channelChipActive: {
+    backgroundColor: '#F59E0B',
+    borderColor: '#D97706',
+  },
+  channelChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#9CA3AF',
+  },
+  channelChipTextActive: {
+    color: '#0B0D0F',
+    fontWeight: '700',
+  },
+  unlockChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+  unlockChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#EF4444',
   },
 });
