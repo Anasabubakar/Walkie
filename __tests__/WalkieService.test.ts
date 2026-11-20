@@ -68,14 +68,17 @@ describe('WalkieService', () => {
   });
 
   test('initializes with default preset channels and OFFLINE state', () => {
-    expect(service.channels.length).toBe(3);
-    expect(service.channels.map((c) => c.name)).toEqual(['Stage', 'Production', 'Front Desk']);
-    expect(service.currentChannel.name).toBe('Stage');
+    expect(service.channels.length).toBe(4);
+    expect(service.channels.map((c) => c.name)).toEqual(['General (All Call)', 'Stage', 'Production', 'Front Desk']);
+    expect(service.currentChannel.name).toBe('General (All Call)');
     expect(service.connectionState).toBe('OFFLINE');
     expect(service.floorState).toBe('IDLE');
   });
 
   test('channel switching cycles forward and backward across channels', () => {
+    expect(service.currentChannel.id).toBe('ch_all');
+
+    service.switchChannel('next');
     expect(service.currentChannel.id).toBe('ch_stage');
 
     service.switchChannel('next');
@@ -86,11 +89,28 @@ describe('WalkieService', () => {
 
     // Cycle back to beginning
     service.switchChannel('next');
-    expect(service.currentChannel.id).toBe('ch_stage');
+    expect(service.currentChannel.id).toBe('ch_all');
 
     // Previous cycles to last
     service.switchChannel('prev');
     expect(service.currentChannel.id).toBe('ch_front');
+  });
+
+  test('locked channel prevents switching channels', () => {
+    service.selectChannel('ch_prod');
+    expect(service.currentChannel.id).toBe('ch_prod');
+
+    service.isLocked = true;
+    service.switchChannel('next');
+    // Still on ch_prod because locked!
+    expect(service.currentChannel.id).toBe('ch_prod');
+
+    service.selectChannel('ch_stage');
+    expect(service.currentChannel.id).toBe('ch_prod');
+
+    service.isLocked = false;
+    service.selectChannel('ch_stage');
+    expect(service.currentChannel.id).toBe('ch_stage');
   });
 
   test('startHost configures organizer role and CONNECTED state', async () => {
