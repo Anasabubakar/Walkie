@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["ExpoWalkieCoreModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.walkiecore.ExpoWalkieCoreModule"]
+  }
+}
