@@ -40,12 +40,23 @@ This release resolves crashes observed on various Android devices across differe
 - **TypeScript Typecheck**: 100% pass (`npx tsc --noEmit`)
 - **Jest Test Suite**: 19 tests passing across state machine, protocol codecs, and service lifecycle
 - **Rust Engine Tests**: 100% pass across protocol, floor arbitration, and multi-client relay
-- **Package Integrity**: All 4 ABI targets verified in APK structure
+- **Package Integrity**: All 4 ABI targets verified in APK structure (`arm64-v8a`, `armeabi-v7a`, `x86_64`, `x86`)
 
 ---
 
 ### Package Details & Checksums
 
-- **Binary**: `walkie-pilot-v0.1.0-pilot.2.apk` (or `walkie-pilot-v0.1.0.apk`)
+- **Binary**: `walkie-pilot-v0.1.0-pilot.2.apk` (189 MB)
 - **Architectures**: `arm64-v8a`, `armeabi-v7a`, `x86_64`, `x86`
 - **Embedded Bundle**: Complete standalone JavaScript bundle embedded (no Metro server needed)
+- **SHA-256 Checksum**:
+  ```
+  d96fa71f8b14c99c3f89fd2dc6c2b70f3bbcf628c27a705aea60597c026063b7  walkie-pilot-v0.1.0-pilot.2.apk
+  ```
+
+---
+
+### Installation
+
+Download and install directly on your Android phone:
+[Download walkie-pilot-v0.1.0-pilot.2.apk](https://github.com/Anasabubakar/Walkie/releases/download/v0.1.0-pilot.2/walkie-pilot-v0.1.0-pilot.2.apk)
