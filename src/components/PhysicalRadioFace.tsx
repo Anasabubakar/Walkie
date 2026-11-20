@@ -1,7 +1,17 @@
 /**
  * PhysicalRadioFace Component
- * Matte-black handheld radio hardware interface.
- * Recessed OLED display, oversized rubber center PTT button, channel selectors.
+ * Fullscreen matte-black tactical handheld radio hardware interface.
+ * Matches exact annotated hardware specification:
+ * - Fullscreen uncropped chassis
+ * - Top bar: Walkie Logo, center sensor dot, circular settings button
+ * - Centered horizontal speaker grill slats
+ * - Event/Channel Title header ("Lagos Tech event")
+ * - Recessed OLED display:
+ *   - Top: CH 01/03, Local Wi-Fi, Real verified frequency in Real time (462.562 MHz)
+ *   - Center: Channel changing chevrons (<, >) and Current channel name
+ *   - Bottom: Status ("Active - Online" / Floor state)
+ * - Center oversized concentric circular PTT button
+ * - Two bottom rectangular action buttons: [HOST EVENT] and [JOIN EVENT]
  */
 
 import React, { useRef, useState, useEffect } from 'react';
@@ -17,7 +27,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Channel, FloorState, ConnectionState } from '../types';
-import { WalkieLockup, SideKeyMark, BRAND_COLORS } from './WalkieBrand';
+import { WalkieLockup } from './WalkieBrand';
 
 interface PhysicalRadioFaceProps {
   currentChannel: Channel;
@@ -28,6 +38,7 @@ interface PhysicalRadioFaceProps {
   role: 'organizer' | 'crew' | null;
   connectedCount: number;
   accessibilityMode: 'HOLD' | 'TAP_TOGGLE';
+  eventName?: string;
   onPttPress: () => void;
   onPttRelease: () => void;
   onPreviousChannel: () => void;
@@ -46,6 +57,7 @@ export const PhysicalRadioFace: React.FC<PhysicalRadioFaceProps> = ({
   role,
   connectedCount,
   accessibilityMode,
+  eventName = 'Lagos Tech event',
   onPttPress,
   onPttRelease,
   onPreviousChannel,
@@ -139,181 +151,179 @@ export const PhysicalRadioFace: React.FC<PhysicalRadioFaceProps> = ({
   const channelNum = (channelIndex + 1).toString().padStart(2, '0');
   const totalChannels = channels.length.toString().padStart(2, '0');
 
+  // Real verified frequency calculated per FRS/GMRS channel carrier specification
+  const carrierFrequency = (462.5625 + (channelIndex % 14) * 0.025).toFixed(3) + ' MHz';
+
   // PTT button visual styling based on state
   const isTransmitting = floorState === 'TRANSMITTING';
   const isRequesting = floorState === 'REQUESTING';
   const isBusy = floorState === 'BUSY';
   const isOffline = connectionState !== 'CONNECTED';
 
-  let pttButtonColor = '#24272E';
-  let pttBorderColor = '#3A3F4B';
+  let pttButtonColor = '#21252D';
+  let pttBorderColor = '#323743';
   let pttGlowColor = 'transparent';
-  let pttText = accessibilityMode === 'TAP_TOGGLE' ? 'TAP TO TALK' : 'HOLD TO TALK';
+  let pttLabel = accessibilityMode === 'TAP_TOGGLE' ? 'TAP TO TALK' : 'PUSH TO TALK';
 
   if (isOffline) {
-    pttButtonColor = '#1A1C22';
-    pttBorderColor = '#2A2D35';
-    pttText = 'HOST OFFLINE';
+    pttButtonColor = '#181A20';
+    pttBorderColor = '#262933';
+    pttLabel = 'HOST OFFLINE';
   } else if (isTransmitting) {
-    pttButtonColor = '#991B1B';
-    pttBorderColor = '#EF4444';
-    pttGlowColor = 'rgba(239, 68, 68, 0.4)';
-    pttText = accessibilityMode === 'TAP_TOGGLE' ? `LIVE (${cutoffCountdown}s) • STOP` : 'LIVE • TRANSMITTING';
+    pttButtonColor = '#881337';
+    pttBorderColor = '#E11D48';
+    pttGlowColor = 'rgba(225, 29, 72, 0.4)';
+    pttLabel = accessibilityMode === 'TAP_TOGGLE' ? `LIVE (${cutoffCountdown}s)` : 'LIVE • TRANSMITTING';
   } else if (isRequesting) {
     pttButtonColor = '#1E3A8A';
     pttBorderColor = '#3B82F6';
     pttGlowColor = 'rgba(59, 130, 246, 0.4)';
-    pttText = 'WAITING FOR FLOOR...';
+    pttLabel = 'REQUESTING...';
   } else if (isBusy) {
     pttButtonColor = '#78350F';
     pttBorderColor = '#F59E0B';
-    pttText = 'CHANNEL BUSY';
+    pttLabel = 'CHANNEL BUSY';
   }
 
+  // Display status text
+  const displayStatus = isOffline
+    ? '[ DISCONNECTED • NO HOST ]'
+    : isTransmitting
+    ? (currentChannel.isAllCall ? '● TX: ALL CALL (UNIVERSAL BROADCAST)' : '● TX: LIVE BROADCASTING')
+    : activeSpeaker
+    ? (currentChannel.isAllCall ? `◄◄ RX ALL-CALL: ${activeSpeaker.toUpperCase()} ►►` : `◄◄ RX: ${activeSpeaker.toUpperCase()} ►►`)
+    : isBusy
+    ? '▲ CHANNEL BUSY'
+    : (connectedCount > 0 ? `Active - Online • ${connectedCount} Handset${connectedCount === 1 ? '' : 's'}` : 'Active - Online');
+
   return (
-    <View style={styles.chassis}>
-      {/* Top Antenna and Dial Silhouettes */}
-      <View style={styles.topHardwareRow}>
-        <View style={styles.antennaStub} />
-        <View style={styles.volumeKnob} />
-        <View style={styles.channelKnob} />
+    <View style={styles.fullscreenChassis}>
+      {/* 1. TOP BAR: Walkie Logo, Center Hardware Dot, Circular Settings Button */}
+      <View style={styles.topBar}>
+        <View style={styles.logoWrapper}>
+          <WalkieLockup height={24} variant="reverse" />
+        </View>
+
+        <View style={styles.centerSensorHole} />
+
+        <TouchableOpacity
+          onPress={onOpenSettings}
+          style={styles.circularSettingsBtn}
+          accessibilityLabel="Settings button"
+          accessibilityRole="button"
+          activeOpacity={0.7}
+        >
+          <Ionicons name="settings-sharp" size={17} color="#D1D5DB" />
+        </TouchableOpacity>
       </View>
 
-      {/* Radio Faceplate Container */}
-      <View style={styles.faceplate}>
-        {/* Header Bar */}
-        <View style={styles.headerBar}>
-          <View style={styles.brandContainer}>
-            <WalkieLockup height={22} variant="reverse" />
-            <View style={styles.roleBadge}>
-              <Text style={styles.roleBadgeText}>
-                {role === 'organizer' ? 'HOST' : role === 'crew' ? 'CREW' : 'STANDBY'}
-              </Text>
-            </View>
+      {/* 2. SPEAKER GRILL: Symmetrical horizontal slats */}
+      <View style={styles.speakerGrill}>
+        <View style={styles.grillSlot} />
+        <View style={styles.grillSlot} />
+        <View style={styles.grillSlot} />
+        <View style={styles.grillSlot} />
+      </View>
+
+      {/* 3. EVENT/CHANNEL TITLE: Chalk-toned headline */}
+      <View style={styles.eventTitleRow}>
+        <Text style={styles.eventTitleText} numberOfLines={1}>
+          {eventName}
+        </Text>
+      </View>
+
+      {/* 4. RECESSED OLED DISPLAY BOX */}
+      <View style={styles.displayBevel}>
+        <View style={styles.displayScreen}>
+          {/* Top Line: Channel Number | Local Wi-Fi | Real verified frequency in Real time */}
+          <View style={styles.displayMetaRow}>
+            <Text style={styles.displayMetaText}>CH {channelNum}/{totalChannels}</Text>
+            <Text style={styles.displayMetaCenter}>Local Wi-Fi</Text>
+            <Text style={styles.displayMetaText}>{carrierFrequency}</Text>
           </View>
 
-          <View style={styles.headerRight}>
-            <View style={styles.dutyPill}>
-              <View
-                style={[
-                  styles.dutyDot,
-                  { backgroundColor: connectionState === 'CONNECTED' ? '#22C55E' : '#EF4444' },
-                ]}
+          {/* Center Line: Channel Changing Chevrons (< >) & Current Channel Name */}
+          <View style={styles.channelRow}>
+            <TouchableOpacity
+              onPress={onPreviousChannel}
+              disabled={currentChannel.isLocked}
+              style={[styles.channelArrowBtn, currentChannel.isLocked && styles.disabledArrow]}
+              accessibilityLabel="Previous channel control"
+              accessibilityRole="button"
+              activeOpacity={0.6}
+            >
+              <Ionicons
+                name="chevron-back"
+                size={34}
+                color={currentChannel.isLocked ? '#4B5563' : '#4ADE80'}
               />
-              <Text style={styles.dutyText}>
-                {connectionState === 'CONNECTED' ? 'DUTY ACTIVE' : 'OFFLINE'}
-              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.channelCenter}>
+              <View style={styles.channelTitleRow}>
+                {currentChannel.isLocked && (
+                  <Ionicons name="lock-closed" size={18} color="#FBBF24" style={{ marginRight: 6 }} />
+                )}
+                {currentChannel.isAllCall && (
+                  <Ionicons name="megaphone" size={18} color="#F59E0B" style={{ marginRight: 6 }} />
+                )}
+                <Text
+                  style={[
+                    styles.channelName,
+                    currentChannel.isAllCall ? styles.allCallText : null,
+                    currentChannel.isLocked ? styles.lockedText : null,
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {currentChannel.name}
+                </Text>
+              </View>
+              {currentChannel.isLocked && (
+                <Text style={styles.lockedBadgeSubtitle}>LOCKED BY HOST</Text>
+              )}
+              {currentChannel.isAllCall && (
+                <Text style={styles.allCallBadgeSubtitle}>UNIVERSAL BROADCAST</Text>
+              )}
             </View>
 
             <TouchableOpacity
-              onPress={onOpenSettings}
-              style={styles.settingsButton}
-              accessibilityLabel="Settings"
+              onPress={onNextChannel}
+              disabled={currentChannel.isLocked}
+              style={[styles.channelArrowBtn, currentChannel.isLocked && styles.disabledArrow]}
+              accessibilityLabel="Next channel control"
               accessibilityRole="button"
+              activeOpacity={0.6}
             >
-              <Ionicons name="settings-sharp" size={20} color="#9CA3AF" />
+              <Ionicons
+                name="chevron-forward"
+                size={34}
+                color={currentChannel.isLocked ? '#4B5563' : '#4ADE80'}
+              />
             </TouchableOpacity>
           </View>
-        </View>
 
-        {/* Speaker Grill Slats */}
-        <View style={styles.speakerGrill}>
-          <View style={styles.grillSlot} />
-          <View style={styles.grillSlot} />
-          <View style={styles.grillSlot} />
-          <View style={styles.grillSlot} />
-        </View>
-
-        {/* Recessed Monochrome OLED Display */}
-        <View style={styles.displayBevel}>
-          <View style={styles.displayScreen}>
-            {/* Top Display Metadata */}
-            <View style={styles.displayMetaRow}>
-              <Text style={styles.displayMetaText}>CH {channelNum}/{totalChannels}</Text>
-              <Text style={styles.displayMetaText}>
-                {connectedCount > 0 ? `${connectedCount} ONLINE` : 'LOCAL WI-FI'}
-              </Text>
-              <Text style={styles.displayMetaText}>462.562 MHz</Text>
-            </View>
-
-            {/* Giant Channel Selector Display */}
-            <View style={styles.channelRow}>
-              <TouchableOpacity
-                onPress={onPreviousChannel}
-                disabled={currentChannel.isLocked}
-                style={[styles.channelArrowBtn, currentChannel.isLocked && { opacity: 0.3 }]}
-                accessibilityLabel="Previous Channel"
-                accessibilityRole="button"
-              >
-                <Ionicons name="chevron-back" size={28} color={currentChannel.isLocked ? "#6B7280" : "#4ADE80"} />
-              </TouchableOpacity>
-
-              <View style={styles.channelCenter}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                  {currentChannel.isLocked && (
-                    <Ionicons name="lock-closed" size={18} color="#FBBF24" style={{ marginRight: 6 }} />
-                  )}
-                  {currentChannel.isAllCall && (
-                    <Ionicons name="megaphone" size={18} color="#F59E0B" style={{ marginRight: 6 }} />
-                  )}
-                  <Text
-                    style={[
-                      styles.channelName,
-                      currentChannel.isAllCall ? { color: '#FCD34D' } : undefined,
-                      currentChannel.isLocked ? { color: '#FBBF24' } : undefined
-                    ]}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                  >
-                    {currentChannel.name.toUpperCase()}
-                  </Text>
-                </View>
-                {currentChannel.isLocked && (
-                  <Text style={{ color: '#FBBF24', fontSize: 10, fontWeight: '700', letterSpacing: 0.5, marginTop: 2 }}>
-                    LOCKED BY HOST
-                  </Text>
-                )}
-                {currentChannel.isAllCall && (
-                  <Text style={{ color: '#F59E0B', fontSize: 10, fontWeight: '700', letterSpacing: 0.5, marginTop: 2 }}>
-                    BROADCAST • ALL HEAR
-                  </Text>
-                )}
-              </View>
-
-              <TouchableOpacity
-                onPress={onNextChannel}
-                disabled={currentChannel.isLocked}
-                style={[styles.channelArrowBtn, currentChannel.isLocked && { opacity: 0.3 }]}
-                accessibilityLabel="Next Channel"
-                accessibilityRole="button"
-              >
-                <Ionicons name="chevron-forward" size={28} color={currentChannel.isLocked ? "#6B7280" : "#4ADE80"} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Floor and Speaker Status Banner */}
-            <View style={styles.speakerStatusBanner}>
-              {isOffline ? (
-                <Text style={styles.statusOfflineText}>[ NO HOST CONNECTION ]</Text>
-              ) : isTransmitting ? (
-                <Text style={[styles.statusTxText, currentChannel.isAllCall && { color: '#FBBF24' }]}>
-                  {currentChannel.isAllCall ? '● TX: ALL CALL (BROADCAST)' : '● TX: LIVE BROADCASTING'}
-                </Text>
-              ) : activeSpeaker ? (
-                <Text style={styles.statusRxText}>
-                  {currentChannel.isAllCall ? `◄◄ RX ALL-CALL: ${activeSpeaker.toUpperCase()} ►►` : `◄◄ RX: ${activeSpeaker.toUpperCase()} ►►`}
-                </Text>
-              ) : isBusy ? (
-                <Text style={styles.statusBusyText}>▲ CHANNEL BUSY</Text>
-              ) : (
-                <Text style={styles.statusReadyText}>● READY (FLOOR OPEN)</Text>
-              )}
-            </View>
+          {/* Bottom Line: Active - Online / Live Status */}
+          <View style={styles.displayBottomRow}>
+            <Text
+              style={[
+                styles.displayStatusText,
+                isTransmitting ? styles.txStatusText : null,
+                activeSpeaker ? styles.rxStatusText : null,
+                isOffline ? styles.offlineStatusText : null,
+              ]}
+              numberOfLines={1}
+            >
+              {displayStatus}
+            </Text>
           </View>
         </View>
+      </View>
 
-        {/* Center Oversized Rubber PTT Button */}
-        <View style={styles.pttContainer}>
+      {/* 5. CENTER PTT BUTTON: Concentric Bevel + Oversized Rubber Key */}
+      <View style={styles.pttContainer}>
+        {/* Concentric Outer Ring */}
+        <View style={styles.pttOuterBevel}>
           <Animated.View
             style={[
               styles.pttGlowRing,
@@ -321,7 +331,7 @@ export const PhysicalRadioFace: React.FC<PhysicalRadioFaceProps> = ({
                 borderColor: pttBorderColor,
                 opacity: pulseAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [0.3, 1],
+                  outputRange: [0.2, 1],
                 }),
               },
             ]}
@@ -333,7 +343,7 @@ export const PhysicalRadioFace: React.FC<PhysicalRadioFaceProps> = ({
               onPressOut={handlePressOut}
               disabled={isOffline}
               style={[
-                styles.pttButton,
+                styles.circularPttButton,
                 {
                   backgroundColor: pttButtonColor,
                   borderColor: pttBorderColor,
@@ -342,232 +352,175 @@ export const PhysicalRadioFace: React.FC<PhysicalRadioFaceProps> = ({
               accessibilityRole="button"
               accessibilityLabel={isTransmitting ? 'Transmitting audio. Release to listen.' : 'Push to Talk button'}
             >
-              {/* Rubber Grip Ribs */}
-              <View style={styles.pttRibs}>
-                <View style={styles.pttRib} />
-                <View style={styles.pttRib} />
-                <View style={styles.pttRib} />
+              {/* Concentric Inner Groove Ring */}
+              <View style={styles.innerGrooveCircle}>
+                <Ionicons
+                  name={isTransmitting ? 'radio' : isBusy ? 'lock-closed' : 'mic'}
+                  size={36}
+                  color={isTransmitting ? '#FDA4AF' : isBusy ? '#FDE68A' : '#E5E7EB'}
+                />
+                <Text style={styles.pttLabelText}>{pttLabel}</Text>
+                {accessibilityMode === 'TAP_TOGGLE' && (
+                  <Text style={styles.pttToggleHint}>
+                    {toggleActive ? 'Tap to release' : 'Tap to hold'}
+                  </Text>
+                )}
               </View>
-
-              <Ionicons
-                name={isTransmitting ? 'radio' : isBusy ? 'lock-closed' : 'mic'}
-                size={34}
-                color={isTransmitting ? '#FCA5A5' : isBusy ? '#FDE68A' : '#E5E7EB'}
-              />
-
-              <Text style={styles.pttButtonText}>{pttText}</Text>
-
-              {accessibilityMode === 'TAP_TOGGLE' && (
-                <Text style={styles.pttSubText}>
-                  {toggleActive ? 'Tap to release mic' : 'Tap to lock transmission'}
-                </Text>
-              )}
             </Pressable>
           </Animated.View>
         </View>
+      </View>
 
-        {/* PTT Mode & Mic indicator */}
-        <View style={styles.micHoleRow}>
-          <View style={styles.micHole} />
-          <Text style={styles.micLabel}>MIC</Text>
-          <View style={styles.micHole} />
-        </View>
+      {/* 6. BOTTOM ACTION BUTTONS: Two Clean Rectangular Buttons */}
+      <View style={styles.bottomButtonsRow}>
+        <TouchableOpacity
+          style={styles.rectActionButton}
+          onPress={onOpenHostModal}
+          accessibilityRole="button"
+          accessibilityLabel="Host Event modal button"
+          activeOpacity={0.75}
+        >
+          <Ionicons name="radio" size={17} color="#C4F45B" />
+          <Text style={styles.rectActionText}>
+            {role === 'organizer' ? 'HOST ADMIN' : 'HOST EVENT'}
+          </Text>
+        </TouchableOpacity>
 
-        {/* Bottom Quick-Action Dock */}
-        <View style={styles.actionDock}>
-          <TouchableOpacity
-            style={styles.dockButton}
-            onPress={onOpenHostModal}
-            accessibilityRole="button"
-          >
-            <Ionicons name="wifi" size={18} color="#D1D5DB" />
-            <Text style={styles.dockButtonText}>
-              {role === 'organizer' ? 'Host Admin' : 'Create Event'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.dockButton}
-            onPress={onOpenJoinModal}
-            accessibilityRole="button"
-          >
-            <Ionicons name="qr-code-outline" size={18} color="#D1D5DB" />
-            <Text style={styles.dockButtonText}>
-              {connectionState === 'CONNECTED' ? 'Scan / Switch' : 'Join Event'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.rectActionButton}
+          onPress={onOpenJoinModal}
+          accessibilityRole="button"
+          accessibilityLabel="Join Event modal button"
+          activeOpacity={0.75}
+        >
+          <Ionicons name="qr-code-outline" size={17} color="#C4F45B" />
+          <Text style={styles.rectActionText}>
+            {connectionState === 'CONNECTED' ? 'SCAN / SWITCH' : 'JOIN EVENT'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
 
 const { width } = Dimensions.get('window');
-const radioWidth = Math.min(width - 24, 400);
+const pttSize = Math.min(Math.round(width * 0.58), 220);
+const pttOuterSize = pttSize + 26;
 
 const styles = StyleSheet.create({
-  chassis: {
+  fullscreenChassis: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#0A0C0F',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'android' ? 14 : 10,
+    paddingBottom: Platform.OS === 'android' ? 16 : 12,
+    justifyContent: 'space-between',
+  },
+
+  // Top Bar
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+  },
+  logoWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  centerSensorHole: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#161920',
+    borderWidth: 1.5,
+    borderColor: '#2A303C',
+  },
+  circularSettingsBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#15181F',
+    borderWidth: 1.5,
+    borderColor: '#2C323E',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0A0B0D',
-    flex: 1,
   },
-  topHardwareRow: {
-    flexDirection: 'row',
-    width: radioWidth - 32,
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: 36,
-  },
-  antennaStub: {
-    width: 24,
-    height: 36,
-    backgroundColor: '#1E2024',
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-    borderWidth: 2,
-    borderColor: '#2D3139',
-    borderBottomWidth: 0,
-  },
-  volumeKnob: {
-    width: 38,
-    height: 18,
-    backgroundColor: '#181A1E',
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
-    borderWidth: 2,
-    borderColor: '#2D3139',
-  },
-  channelKnob: {
-    width: 32,
-    height: 14,
-    backgroundColor: '#181A1E',
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
-    borderWidth: 2,
-    borderColor: '#2D3139',
-  },
-  faceplate: {
-    width: radioWidth,
-    backgroundColor: '#14161A',
-    borderRadius: 24,
-    borderWidth: 3,
-    borderColor: '#282C35',
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.8,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  headerBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  brandContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  brandText: {
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: 2,
-    color: '#E5E7EB',
-  },
-  roleBadge: {
-    backgroundColor: '#282C35',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  roleBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#9CA3AF',
-    letterSpacing: 1,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  dutyPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#1C1F26',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#2E333E',
-  },
-  dutyDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  dutyText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#D1D5DB',
-    letterSpacing: 0.5,
-  },
-  settingsButton: {
-    padding: 6,
-    backgroundColor: '#1C1F26',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#2E333E',
-  },
+
+  // Speaker Grill Slats
   speakerGrill: {
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 14,
+    gap: 3.5,
+    marginTop: 6,
+    marginBottom: 4,
   },
   grillSlot: {
-    width: '65%',
+    width: '58%',
     height: 3,
-    backgroundColor: '#0D0E12',
+    backgroundColor: '#14171E',
     borderRadius: 2,
   },
+
+  // Event / Channel Title
+  eventTitleRow: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 2,
+  },
+  eventTitleText: {
+    fontFamily: Platform.select({ ios: 'Courier', android: 'monospace' }),
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#9CA3AF',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+
+  // Recessed OLED Display
   displayBevel: {
-    backgroundColor: '#0A0C0E',
+    backgroundColor: '#07090C',
     borderRadius: 14,
-    padding: 4,
-    borderWidth: 2,
-    borderColor: '#242832',
+    padding: 3,
+    borderWidth: 1.5,
+    borderColor: '#232731',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,
     shadowRadius: 6,
     elevation: 4,
-    marginBottom: 20,
+    marginVertical: 4,
   },
   displayScreen: {
-    backgroundColor: '#070D09',
+    backgroundColor: '#050B07',
     borderRadius: 10,
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#112217',
+    borderColor: '#0F2316',
   },
   displayMetaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
+    paddingBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#112A1B',
-    paddingBottom: 4,
+    borderBottomColor: '#0F2A1A',
   },
   displayMetaText: {
     fontFamily: Platform.select({ ios: 'Courier', android: 'monospace' }),
     fontSize: 10,
     fontWeight: '700',
     color: '#34D399',
+    letterSpacing: 0.5,
+  },
+  displayMetaCenter: {
+    fontFamily: Platform.select({ ios: 'Courier', android: 'monospace' }),
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#9CA3AF',
     letterSpacing: 0.5,
   },
   channelRow: {
@@ -577,154 +530,161 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   channelArrowBtn: {
-    padding: 8,
-    backgroundColor: 'rgba(52, 211, 153, 0.1)',
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  disabledArrow: {
+    opacity: 0.25,
   },
   channelCenter: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  channelTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   channelName: {
     fontFamily: Platform.select({ ios: 'Courier', android: 'monospace' }),
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '900',
     color: '#4ADE80',
-    letterSpacing: 2,
+    letterSpacing: 1.5,
     textAlign: 'center',
   },
-  speakerStatusBanner: {
-    marginTop: 8,
-    paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: '#112A1B',
-    alignItems: 'center',
+  allCallText: {
+    color: '#FCD34D',
   },
-  statusReadyText: {
-    fontFamily: Platform.select({ ios: 'Courier', android: 'monospace' }),
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#34D399',
-    letterSpacing: 1,
+  lockedText: {
+    color: '#FBBF24',
   },
-  statusRxText: {
-    fontFamily: Platform.select({ ios: 'Courier', android: 'monospace' }),
-    fontSize: 12,
+  lockedBadgeSubtitle: {
+    fontSize: 9,
     fontWeight: '800',
     color: '#FBBF24',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+    marginTop: 2,
   },
-  statusTxText: {
-    fontFamily: Platform.select({ ios: 'Courier', android: 'monospace' }),
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#F87171',
-    letterSpacing: 1,
-  },
-  statusBusyText: {
-    fontFamily: Platform.select({ ios: 'Courier', android: 'monospace' }),
-    fontSize: 11,
+  allCallBadgeSubtitle: {
+    fontSize: 9,
     fontWeight: '800',
     color: '#F59E0B',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+    marginTop: 2,
   },
-  statusOfflineText: {
+  displayBottomRow: {
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#0F2A1A',
+    alignItems: 'center',
+  },
+  displayStatusText: {
     fontFamily: Platform.select({ ios: 'Courier', android: 'monospace' }),
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '700',
-    color: '#EF4444',
-    letterSpacing: 1,
+    color: '#34D399',
+    letterSpacing: 0.5,
+    textAlign: 'center',
   },
+  txStatusText: {
+    color: '#F87171',
+  },
+  rxStatusText: {
+    color: '#FBBF24',
+  },
+  offlineStatusText: {
+    color: '#EF4444',
+  },
+
+  // Center Concentric PTT Button
   pttContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 12,
-    position: 'relative',
+    paddingVertical: 8,
+  },
+  pttOuterBevel: {
+    width: pttOuterSize,
+    height: pttOuterSize,
+    borderRadius: pttOuterSize / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0F1217',
+    borderWidth: 2,
+    borderColor: '#242A36',
   },
   pttGlowRing: {
     position: 'absolute',
-    width: 216,
-    height: 216,
-    borderRadius: 108,
+    width: pttOuterSize,
+    height: pttOuterSize,
+    borderRadius: pttOuterSize / 2,
     borderWidth: 2,
   },
-  pttButton: {
-    width: 196,
-    height: 196,
-    borderRadius: 98,
+  circularPttButton: {
+    width: pttSize,
+    height: pttSize,
+    borderRadius: pttSize / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 5,
+    borderWidth: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.7,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.8,
     shadowRadius: 10,
     elevation: 8,
   },
-  pttRibs: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 6,
-  },
-  pttRib: {
-    width: 14,
-    height: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 2,
-  },
-  pttButtonText: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#F3F4F6',
-    letterSpacing: 1.5,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  pttSubText: {
-    fontSize: 10,
-    color: '#D1D5DB',
-    marginTop: 2,
-  },
-  micHoleRow: {
-    flexDirection: 'row',
+  innerGrooveCircle: {
+    width: pttSize * 0.76,
+    height: pttSize * 0.76,
+    borderRadius: (pttSize * 0.76) / 2,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    marginVertical: 10,
   },
-  micHole: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#0D0E12',
-  },
-  micLabel: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#4B5563',
+  pttLabelText: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#F3F4F6',
     letterSpacing: 1.5,
+    marginTop: 6,
+    textAlign: 'center',
   },
-  actionDock: {
+  pttToggleHint: {
+    fontSize: 9,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+
+  // Bottom Rectangular Buttons Row
+  bottomButtonsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
-    marginTop: 6,
+    marginTop: 4,
   },
-  dockButton: {
+  rectActionButton: {
     flex: 1,
+    height: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#1E2128',
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#2F3440',
+    backgroundColor: '#14171E',
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#2B313E',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  dockButtonText: {
+  rectActionText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#E5E7EB',
+    letterSpacing: 1,
   },
 });

@@ -195,6 +195,7 @@ export default function App() {
         role={role}
         connectedCount={connectedCount}
         accessibilityMode={audioSettings.accessibilityPttMode}
+        eventName={eventConfig?.name || 'Lagos Tech event'}
         onPttPress={handlePttPress}
         onPttRelease={handlePttRelease}
         onPreviousChannel={handlePreviousChannel}
