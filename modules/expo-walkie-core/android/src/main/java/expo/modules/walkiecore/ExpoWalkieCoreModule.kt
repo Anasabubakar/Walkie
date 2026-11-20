@@ -51,75 +51,83 @@ class ExpoWalkieCoreModule : Module() {
         )
 
         OnCreate {
-            ExpoWalkieCoreNative.nativeInitCallbacks(object : ExpoWalkieCoreNativeCallbacks {
-                override fun onConnected(eventId: String, eventName: String, channelsJson: String, epoch: Int) {
-                    currentEpoch = epoch.toLong()
-                    val channelsList = parseChannelsJson(channelsJson)
-                    sendEvent("onNetworkStatusUpdate", mapOf("connected" to true, "eventName" to eventName))
-                    sendEvent("onChannelListUpdate", mapOf("channels" to channelsList.map {
-                        mapOf("id" to it.id, "name" to it.name, "isPreset" to it.isPreset)
-                    }))
-                    updateDutyServiceState(connected = true)
-                }
+            if (!ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                Log.e(TAG, "Cannot init native callbacks: libwalkie_core.so is not loaded on this architecture")
+                return@OnCreate
+            }
+            try {
+                ExpoWalkieCoreNative.nativeInitCallbacks(object : ExpoWalkieCoreNativeCallbacks {
+                    override fun onConnected(eventId: String, eventName: String, channelsJson: String, epoch: Int) {
+                        currentEpoch = epoch.toLong()
+                        val channelsList = parseChannelsJson(channelsJson)
+                        sendEvent("onNetworkStatusUpdate", mapOf("connected" to true, "eventName" to eventName))
+                        sendEvent("onChannelListUpdate", mapOf("channels" to channelsList.map {
+                            mapOf("id" to it.id, "name" to it.name, "isPreset" to it.isPreset)
+                        }))
+                        updateDutyServiceState(connected = true)
+                    }
 
-                override fun onDisconnected(reason: String) {
-                    activeLeaseId = null
-                    audioEngine?.stopCapture()
-                    sendEvent("onNetworkStatusUpdate", mapOf("connected" to false, "reason" to reason))
-                    sendEvent("onFloorChange", mapOf("floorState" to "DISCONNECTED", "channelId" to currentChannelId))
-                    updateDutyServiceState(connected = false, talking = false)
-                }
+                    override fun onDisconnected(reason: String) {
+                        activeLeaseId = null
+                        audioEngine?.stopCapture()
+                        sendEvent("onNetworkStatusUpdate", mapOf("connected" to false, "reason" to reason))
+                        sendEvent("onFloorChange", mapOf("floorState" to "DISCONNECTED", "channelId" to currentChannelId))
+                        updateDutyServiceState(connected = false, talking = false)
+                    }
 
-                override fun onFloorGranted(reqId: String, channelId: String, leaseId: String, epoch: Int) {
-                    activeLeaseId = leaseId
-                    currentEpoch = epoch.toLong()
-                    audioEngine?.playChirp("GRANT")
-                    audioEngine?.startCapture()
-                    sendEvent("onFloorChange", mapOf(
-                        "floorState" to "TRANSMITTING",
-                        "channelId" to channelId,
-                        "leaseId" to leaseId
-                    ))
-                    updateDutyServiceState(talking = true)
-                }
+                    override fun onFloorGranted(reqId: String, channelId: String, leaseId: String, epoch: Int) {
+                        activeLeaseId = leaseId
+                        currentEpoch = epoch.toLong()
+                        audioEngine?.playChirp("GRANT")
+                        audioEngine?.startCapture()
+                        sendEvent("onFloorChange", mapOf(
+                            "floorState" to "TRANSMITTING",
+                            "channelId" to channelId,
+                            "leaseId" to leaseId
+                        ))
+                        updateDutyServiceState(talking = true)
+                    }
 
-                override fun onFloorBusy(channelId: String, holderName: String) {
-                    audioEngine?.playChirp("BUSY")
-                    sendEvent("onFloorChange", mapOf(
-                        "floorState" to "BUSY",
-                        "channelId" to channelId,
-                        "holderName" to holderName
-                    ))
-                }
+                    override fun onFloorBusy(channelId: String, holderName: String) {
+                        audioEngine?.playChirp("BUSY")
+                        sendEvent("onFloorChange", mapOf(
+                            "floorState" to "BUSY",
+                            "channelId" to channelId,
+                            "holderName" to holderName
+                        ))
+                    }
 
-                override fun onFloorRevoked(channelId: String, leaseId: String, reason: String) {
-                    activeLeaseId = null
-                    audioEngine?.stopCapture()
-                    audioEngine?.playChirp("TIMEOUT")
-                    sendEvent("onFloorChange", mapOf(
-                        "floorState" to "IDLE",
-                        "channelId" to channelId
-                    ))
-                    updateDutyServiceState(talking = false)
-                }
+                    override fun onFloorRevoked(channelId: String, leaseId: String, reason: String) {
+                        activeLeaseId = null
+                        audioEngine?.stopCapture()
+                        audioEngine?.playChirp("TIMEOUT")
+                        sendEvent("onFloorChange", mapOf(
+                            "floorState" to "IDLE",
+                            "channelId" to channelId
+                        ))
+                        updateDutyServiceState(talking = false)
+                    }
 
-                override fun onSpeakerChanged(channelId: String, speakerId: String?, speakerName: String?) {
-                    sendEvent("onSpeakerChange", mapOf(
-                        "channelId" to channelId,
-                        "speakerId" to speakerId,
-                        "speakerName" to speakerName
-                    ))
-                    updateDutyServiceState(speakerName = speakerName)
-                }
+                    override fun onSpeakerChanged(channelId: String, speakerId: String?, speakerName: String?) {
+                        sendEvent("onSpeakerChange", mapOf(
+                            "channelId" to channelId,
+                            "speakerId" to speakerId,
+                            "speakerName" to speakerName
+                        ))
+                        updateDutyServiceState(speakerName = speakerName)
+                    }
 
-                override fun onIncomingAudioFrame(pcmData: ByteArray) {
-                    audioEngine?.playIncomingAudioFrame(pcmData)
-                }
+                    override fun onIncomingAudioFrame(pcmData: ByteArray) {
+                        audioEngine?.playIncomingAudioFrame(pcmData)
+                    }
 
-                override fun onMemberCountChanged(count: Int) {
-                    sendEvent("onMemberUpdate", mapOf("connectedCount" to count))
-                }
-            })
+                    override fun onMemberCountChanged(count: Int) {
+                        sendEvent("onMemberUpdate", mapOf("count" to count))
+                    }
+                })
+            } catch (e: Throwable) {
+                Log.e(TAG, "Failed to initialize native callbacks: ${e.message}", e)
+            }
 
             WalkieDutyService.onLockScreenTalkToggled = {
                 toggleFloorFromLockScreen()
@@ -130,34 +138,81 @@ class ExpoWalkieCoreModule : Module() {
             cleanupAll()
         }
 
+        // --- Core Push-to-Talk & Radio Methods ---
+
+        Function("requestFloor") {
+            val reqId = "req_${System.currentTimeMillis()}"
+            if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                ExpoWalkieCoreNative.nativeRequestFloor(reqId)
+            }
+            reqId
+        }
+
+        Function("releaseFloor") {
+            if (activeLeaseId != null || WalkieDutyService.isTalkingState) {
+                if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                    ExpoWalkieCoreNative.nativeReleaseFloor()
+                }
+                activeLeaseId = null
+                audioEngine?.stopCapture()
+                sendEvent("onFloorChange", mapOf("floorState" to "IDLE", "channelId" to currentChannelId))
+                updateDutyServiceState(talking = false)
+            }
+            true
+        }
+
+        Function("selectChannel") { channelId: String ->
+            currentChannelId = channelId
+            if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                ExpoWalkieCoreNative.nativeSelectChannel(channelId)
+            }
+            updateDutyServiceState()
+            true
+        }
+
+        Function("setAudioRoute") { route: String ->
+            audioEngine?.setAudioRoute(route)
+            true
+        }
+
+        Function("playChirp") { type: String ->
+            audioEngine?.playChirp(type)
+            true
+        }
+
+        // --- Host & Client Lifecycle ---
+
         AsyncFunction("startHost") { eventName: String, channelsJson: String, promise: Promise ->
+            if (!ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                promise.reject("NATIVE_NOT_LOADED", "Native engine walkie_core is not loaded", null)
+                return@AsyncFunction
+            }
             try {
                 cleanupAll()
                 val baseDir = context.filesDir.absolutePath
-                val hostResultJson = ExpoWalkieCoreNative.nativeStartHost(baseDir, eventName, channelsJson, DEFAULT_PORT)
-                val json = JSONObject(hostResultJson)
-                if (json.has("error")) {
-                    promise.reject("START_HOST_FAILED", json.getString("error"), null)
+                val port = DEFAULT_PORT
+
+                val configJsonStr = ExpoWalkieCoreNative.nativeStartHost(
+                    baseDir = baseDir,
+                    eventName = eventName,
+                    channelsJson = channelsJson,
+                    port = port
+                )
+
+                if (configJsonStr.isEmpty()) {
+                    promise.reject("START_HOST_FAILED", "Failed to start Rust host server", null)
                     return@AsyncFunction
                 }
 
-                val eventId = json.getString("eventId")
-                val port = json.getInt("port")
-                val hostFingerprint = json.getString("hostFingerprint")
-                val admissionToken = json.getString("admissionToken")
-                val channelsArray = json.getJSONArray("channels")
-                val channelsList = mutableListOf<ChannelData>()
-                for (i in 0 until channelsArray.length()) {
-                    val obj = channelsArray.getJSONObject(i)
-                    channelsList.add(ChannelData(
-                        id = obj.getString("id"),
-                        name = obj.getString("name"),
-                        isPreset = obj.optBoolean("isPreset", false)
-                    ))
-                }
+                val configObj = JSONObject(configJsonStr)
+                val eventId = configObj.getString("eventId")
+                val admissionToken = configObj.getString("admissionToken")
+                val hostFingerprint = configObj.getString("hostFingerprint")
+                val channelsList = parseChannelsJson(channelsJson)
 
-                val localIp = getLocalWifiIpAddress() ?: "127.0.0.1"
+                val localIp = getLocalWifiIpAddress()
                 val hostEndpoint = "$localIp:$port"
+
                 activeEventConfig = EventData(
                     eventId = eventId,
                     name = eventName,
@@ -197,7 +252,9 @@ class ExpoWalkieCoreModule : Module() {
 
         AsyncFunction("stopHost") { promise: Promise ->
             try {
-                ExpoWalkieCoreNative.nativeStopHost()
+                if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                    ExpoWalkieCoreNative.nativeStopHost()
+                }
                 cleanupAll()
                 stopDutyService()
                 promise.resolve(true)
@@ -207,6 +264,10 @@ class ExpoWalkieCoreModule : Module() {
         }
 
         AsyncFunction("joinEvent") { endpoint: String, token: String, hostFingerprint: String, displayName: String, channelId: String, promise: Promise ->
+            if (!ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                promise.reject("NATIVE_NOT_LOADED", "Native engine walkie_core is not loaded", null)
+                return@AsyncFunction
+            }
             try {
                 cleanupAll()
                 myDisplayName = displayName
@@ -243,55 +304,38 @@ class ExpoWalkieCoreModule : Module() {
             }
         }
 
-        Function("selectChannel") { channelId: String ->
-            currentChannelId = channelId
-            ExpoWalkieCoreNative.nativeSelectChannel(channelId)
-            sendEvent("onStateChange", mapOf("state" to "IDLE", "channelId" to channelId))
-            true
-        }
-
-        Function("requestFloor") {
-            val reqId = "req_${System.currentTimeMillis()}"
-            ExpoWalkieCoreNative.nativeRequestFloor(reqId)
-            sendEvent("onFloorChange", mapOf("floorState" to "REQUESTING", "channelId" to currentChannelId))
-            true
-        }
-
-        Function("releaseFloor") {
-            ExpoWalkieCoreNative.nativeReleaseFloor()
-            activeLeaseId = null
-            audioEngine?.stopCapture()
-            sendEvent("onFloorChange", mapOf("floorState" to "IDLE", "channelId" to currentChannelId))
-            updateDutyServiceState(talking = false)
-            true
-        }
-
-        Function("setAudioRoute") { route: String ->
-            audioEngine?.setAudioRoute(route)
-            true
-        }
-
-        Function("playChirp") { type: String ->
-            audioEngine?.playChirp(type)
-            true
-        }
-
         Function("getDiagnostics") {
-            val diagJson = ExpoWalkieCoreNative.nativeGetDiagnostics()
-            val diagObj = try { JSONObject(diagJson) } catch (_: Exception) { JSONObject() }
-            mapOf(
-                "localIp" to (getLocalWifiIpAddress() ?: "Unknown"),
-                "hostEndpoint" to (activeEventConfig?.hostEndpoint ?: "Disconnected"),
-                "rttMs" to diagObj.optLong("rttMs", 0),
-                "packetsSent" to diagObj.optLong("packetsSent", 0),
-                "packetsReceived" to diagObj.optLong("packetsReceived", 0),
-                "packetLossRate" to 0.0,
-                "jitterMs" to diagObj.optDouble("jitterMs", 2.5),
-                "lastGrantLatencyMs" to 140
-            )
+            val diagJson = if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                ExpoWalkieCoreNative.nativeGetDiagnostics()
+            } else {
+                "{}"
+            }
+            val localIp = getLocalWifiIpAddress()
+            val hostEp = activeEventConfig?.hostEndpoint ?: "Connected"
+
+            try {
+                val obj = JSONObject(diagJson)
+                mapOf(
+                    "localIp" to localIp,
+                    "hostEndpoint" to hostEp,
+                    "rttMs" to obj.optInt("rttMs", 0),
+                    "jitterMs" to obj.optDouble("jitterMs", 0.0),
+                    "packetsSent" to obj.optInt("packetsSent", 0),
+                    "packetsReceived" to obj.optInt("packetsReceived", 0)
+                )
+            } catch (e: Exception) {
+                mapOf(
+                    "localIp" to localIp,
+                    "hostEndpoint" to hostEp,
+                    "rttMs" to 0,
+                    "jitterMs" to 0.0,
+                    "packetsSent" to 0,
+                    "packetsReceived" to 0
+                )
+            }
         }
 
-        Function("getEventConfig") {
+        Function("getActiveEventConfig") {
             val config = activeEventConfig
             if (config != null) {
                 mapOf(
@@ -306,6 +350,7 @@ class ExpoWalkieCoreModule : Module() {
         }
 
         Function("rotateAdmissionToken") {
+            if (!ExpoWalkieCoreNative.isNativeLibraryLoaded) return@Function ""
             val newToken = ExpoWalkieCoreNative.nativeGenerateAdmissionToken("crew", 24)
             val current = activeEventConfig
             if (current != null) {
@@ -315,40 +360,54 @@ class ExpoWalkieCoreModule : Module() {
         }
 
         Function("revokeMember") { clientIdToRevoke: String, reason: String ->
-            ExpoWalkieCoreNative.nativeRevokeDevice(clientIdToRevoke, reason)
+            if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                ExpoWalkieCoreNative.nativeRevokeDevice(clientIdToRevoke, reason)
+            }
             true
         }
     }
 
     private fun initAudioEngine() {
-        audioEngine?.release()
-        audioEngine = WalkieAudioEngine(
-            context = context,
-            onAudioFrameCaptured = { pcmBuffer, length ->
-                ExpoWalkieCoreNative.nativeSendAudioFrame(pcmBuffer, length)
-            },
-            onAudioFocusLost = {
-                releaseFloorFromNative()
-            }
-        )
+        try {
+            audioEngine?.release()
+            audioEngine = WalkieAudioEngine(
+                context = context,
+                onAudioFrameCaptured = { pcmBuffer, length ->
+                    if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                        ExpoWalkieCoreNative.nativeSendAudioFrame(pcmBuffer, length)
+                    }
+                },
+                onAudioFocusLost = {
+                    releaseFloorFromNative()
+                }
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize WalkieAudioEngine: ${e.message}", e)
+        }
     }
 
     private fun toggleFloorFromLockScreen() {
         if (activeLeaseId != null) {
-            ExpoWalkieCoreNative.nativeReleaseFloor()
+            if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                ExpoWalkieCoreNative.nativeReleaseFloor()
+            }
             activeLeaseId = null
             audioEngine?.stopCapture()
             sendEvent("onFloorChange", mapOf("floorState" to "IDLE", "channelId" to currentChannelId))
             updateDutyServiceState(talking = false)
         } else {
             val reqId = "req_lock_${System.currentTimeMillis()}"
-            ExpoWalkieCoreNative.nativeRequestFloor(reqId)
+            if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                ExpoWalkieCoreNative.nativeRequestFloor(reqId)
+            }
             sendEvent("onFloorChange", mapOf("floorState" to "REQUESTING", "channelId" to currentChannelId))
         }
     }
 
     private fun releaseFloorFromNative() {
-        ExpoWalkieCoreNative.nativeReleaseFloor()
+        if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+            ExpoWalkieCoreNative.nativeReleaseFloor()
+        }
         activeLeaseId = null
         audioEngine?.stopCapture()
         sendEvent("onFloorChange", mapOf("floorState" to "IDLE", "channelId" to currentChannelId))
@@ -387,12 +446,16 @@ class ExpoWalkieCoreModule : Module() {
         connected: Boolean = true,
         talking: Boolean = WalkieDutyService.isTalkingState
     ) {
-        WalkieDutyService.instance?.updateNotificationState(
-            channelName = currentChannelName,
-            speakerName = speakerName,
-            connected = connected,
-            talking = talking
-        )
+        try {
+            WalkieDutyService.instance?.updateNotificationState(
+                channelName = currentChannelName,
+                speakerName = speakerName,
+                connected = connected,
+                talking = talking
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to update duty service state: ${e.message}")
+        }
     }
 
     private fun parseChannelsJson(channelsJson: String): List<ChannelData> {
@@ -414,27 +477,49 @@ class ExpoWalkieCoreModule : Module() {
     }
 
     private fun cleanupAll() {
-        ExpoWalkieCoreNative.nativeStopClient()
+        try {
+            if (ExpoWalkieCoreNative.isNativeLibraryLoaded) {
+                ExpoWalkieCoreNative.nativeStopClient()
+            }
+        } catch (ignored: Exception) {}
         audioEngine?.release()
         audioEngine = null
         activeLeaseId = null
     }
 
-    private fun getLocalWifiIpAddress(): String? {
+    private fun getLocalWifiIpAddress(): String {
         try {
-            val interfaces = NetworkInterface.getNetworkInterfaces()
-            while (interfaces.hasMoreElements()) {
-                val iface = interfaces.nextElement()
+            val wm = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+            val ipInt = wm?.connectionInfo?.ipAddress ?: 0
+            if (ipInt != 0) {
+                return String.format(
+                    java.util.Locale.US,
+                    "%d.%d.%d.%d",
+                    ipInt and 0xff,
+                    ipInt shr 8 and 0xff,
+                    ipInt shr 16 and 0xff,
+                    ipInt shr 24 and 0xff
+                )
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "WifiManager IP resolution error: ${e.message}")
+        }
+
+        try {
+            val interfaces = NetworkInterface.getNetworkInterfaces()?.toList() ?: emptyList()
+            val sorted = interfaces.sortedByDescending { it.name.startsWith("wlan") || it.name.startsWith("ap") }
+            for (iface in sorted) {
                 if (iface.isLoopback || !iface.isUp) continue
-                val addresses = iface.inetAddresses
-                while (addresses.hasMoreElements()) {
-                    val addr = addresses.nextElement()
+                for (addr in iface.inetAddresses) {
                     if (!addr.isLoopbackAddress && addr is java.net.Inet4Address) {
-                        return addr.hostAddress
+                        val host = addr.hostAddress
+                        if (host != null && !host.startsWith("127.")) {
+                            return host
+                        }
                     }
                 }
             }
         } catch (ignored: Exception) {}
-        return null
+        return "127.0.0.1"
     }
 }

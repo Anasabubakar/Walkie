@@ -5,7 +5,14 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, SafeAreaView, StatusBar, Alert } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  SafeAreaView,
+  Alert,
+  PermissionsAndroid,
+  Platform,
+} from 'react-native';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import WalkieService from './src/services/WalkieService';
 import { PhysicalRadioFace } from './src/components/PhysicalRadioFace';
@@ -33,6 +40,24 @@ export default function App() {
   const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
   const [isHostModalVisible, setIsHostModalVisible] = useState(false);
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
+
+  useEffect(() => {
+    // Request essential runtime permissions on Android launch
+    if (Platform.OS === 'android') {
+      const requestPermissions = async () => {
+        try {
+          const perms: any[] = [PermissionsAndroid.PERMISSIONS.RECORD_AUDIO];
+          if (typeof Platform.Version === 'number' && Platform.Version >= 33) {
+            perms.push('android.permission.POST_NOTIFICATIONS' as any);
+          }
+          await PermissionsAndroid.requestMultiple(perms);
+        } catch (e) {
+          console.warn('[Walkie] Permission request error:', e);
+        }
+      };
+      requestPermissions();
+    }
+  }, []);
 
   useEffect(() => {
     // Subscribe to state updates from WalkieService
@@ -72,6 +97,19 @@ export default function App() {
 
   const handleStartHost = async (eventName: string, initialChannels: Channel[]) => {
     try {
+      if (Platform.OS === 'android') {
+        const hasMic = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+        if (!hasMic) {
+          const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+            Alert.alert(
+              'Microphone Permission Required',
+              'Walkie requires microphone access to transmit audio on radio channels.'
+            );
+            return;
+          }
+        }
+      }
       await service.startHost(eventName, initialChannels);
       Alert.alert(
         'Host Started',
@@ -98,6 +136,12 @@ export default function App() {
     channelId: string
   ) => {
     try {
+      if (Platform.OS === 'android') {
+        const hasMic = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+        if (!hasMic) {
+          await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+        }
+      }
       await service.joinEvent(endpoint, token, fingerprint, displayName, channelId);
       Alert.alert('Connected', `Connected to venue host on channel ${channelId}.`);
     } catch (e: any) {

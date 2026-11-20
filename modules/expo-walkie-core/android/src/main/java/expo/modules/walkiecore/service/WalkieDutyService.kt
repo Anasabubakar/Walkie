@@ -1,5 +1,6 @@
 package expo.modules.walkiecore.service
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -8,12 +9,15 @@ import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 
 class WalkieDutyService : Service() {
 
@@ -54,7 +58,11 @@ class WalkieDutyService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP_SERVICE -> {
-                stopForeground(STOP_FOREGROUND_REMOVE)
+                try {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Error stopping foreground: ${e.message}")
+                }
                 stopSelf()
                 return START_NOT_STICKY
             }
@@ -70,10 +78,37 @@ class WalkieDutyService : Service() {
                 updateNotification()
             }
             else -> {
-                startForeground(NOTIFICATION_ID, buildNotification())
+                startDutyForeground()
             }
         }
         return START_STICKY
+    }
+
+    private fun startDutyForeground() {
+        try {
+            val notification = buildNotification()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                var fgsType = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                val hasAudioPermission = ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.RECORD_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
+
+                if (hasAudioPermission) {
+                    fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    startForeground(NOTIFICATION_ID, notification, fgsType)
+                } else {
+                    startForeground(NOTIFICATION_ID, notification)
+                }
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start foreground service: ${e.message}", e)
+        }
     }
 
     override fun onDestroy() {
@@ -87,17 +122,21 @@ class WalkieDutyService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Walkie Active Duty",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Keeps Walkie connected to venue radio channels while locked"
-                setShowBadge(false)
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            try {
+                val channel = NotificationChannel(
+                    CHANNEL_ID,
+                    "Walkie Active Duty",
+                    NotificationManager.IMPORTANCE_LOW
+                ).apply {
+                    description = "Keeps Walkie connected to venue radio channels while locked"
+                    setShowBadge(false)
+                    lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                }
+                val nm = getSystemService(NotificationManager::class.java)
+                nm?.createNotificationChannel(channel)
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to create notification channel: ${e.message}")
             }
-            val nm = getSystemService(NotificationManager::class.java)
-            nm.createNotificationChannel(channel)
         }
     }
 
@@ -145,37 +184,69 @@ class WalkieDutyService : Service() {
     }
 
     private fun updateNotification() {
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(NOTIFICATION_ID, buildNotification())
+        try {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            nm?.notify(NOTIFICATION_ID, buildNotification())
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to update notification: ${e.message}")
+        }
     }
 
     private fun acquireLocks() {
         try {
-            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Walkie:DutyServiceWakeLock").apply {
-                acquire()
-            }
-
-            val wm = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-            wifiLock = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                wm.createWifiLock(WifiManager.WIFI_MODE_FULL_LOW_LATENCY, "Walkie:WifiLowLatencyLock")
-            } else {
-                @Suppress("DEPRECATION")
-                wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "Walkie:WifiHighPerfLock")
-            }.apply {
-                acquire()
+            val pm = getSystemService(Context.POWER_SERVICE) as? PowerManager
+            wakeLock = pm?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Walkie:DutyServiceWakeLock")?.apply {
+                setReferenceCounted(false)
+                acquire(24 * 60 * 60 * 1000L) // Safe 24hr timeout
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to acquire locks: ${e.message}")
+            Log.w(TAG, "Failed to acquire wake lock: ${e.message}")
+        }
+
+        try {
+            val wm = applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+            if (wm != null) {
+                wifiLock = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    try {
+                        wm.createWifiLock(WifiManager.WIFI_MODE_FULL_LOW_LATENCY, "Walkie:WifiLowLatencyLock")
+                    } catch (e: Exception) {
+                        @Suppress("DEPRECATION")
+                        wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "Walkie:WifiHighPerfLock")
+                    }
+                } else {
+                    @Suppress("DEPRECATION")
+                    wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "Walkie:WifiHighPerfLock")
+                }.apply {
+                    setReferenceCounted(false)
+                    acquire()
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to acquire wifi lock: ${e.message}")
         }
     }
 
     private fun releaseLocks() {
         try {
-            if (wakeLock?.isHeld == true) wakeLock?.release()
-            if (wifiLock?.isHeld == true) wifiLock?.release()
+            wakeLock?.let {
+                if (it.isHeld) {
+                    it.release()
+                }
+            }
+            wakeLock = null
         } catch (e: Exception) {
-            Log.w(TAG, "Error releasing locks: ${e.message}")
+            Log.w(TAG, "Error releasing wake lock: ${e.message}")
+        }
+
+        try {
+            wifiLock?.let {
+                if (it.isHeld) {
+                    it.release()
+                }
+            }
+            wifiLock = null
+        } catch (e: Exception) {
+            Log.w(TAG, "Error releasing wifi lock: ${e.message}")
         }
     }
 }

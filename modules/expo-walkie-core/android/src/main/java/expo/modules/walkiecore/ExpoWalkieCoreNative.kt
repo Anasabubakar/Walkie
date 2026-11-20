@@ -16,12 +16,17 @@ interface ExpoWalkieCoreNativeCallbacks {
 object ExpoWalkieCoreNative {
     private const val TAG = "ExpoWalkieCoreNative"
 
+    var isNativeLibraryLoaded: Boolean = false
+        private set
+
     init {
         try {
             System.loadLibrary("walkie_core")
+            isNativeLibraryLoaded = true
             Log.i(TAG, "libwalkie_core.so loaded successfully")
-        } catch (e: UnsatisfiedLinkError) {
-            Log.e(TAG, "Failed to load libwalkie_core.so", e)
+        } catch (e: Throwable) {
+            isNativeLibraryLoaded = false
+            Log.e(TAG, "Failed to load libwalkie_core.so: ${e.message}", e)
         }
     }
 
