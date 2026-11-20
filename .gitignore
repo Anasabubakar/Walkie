@@ -48,6 +48,7 @@ Cargo.lock
 # Gradle
 .gradle/
 build/
+**/build/
 
 # Binaries
 *.apk
