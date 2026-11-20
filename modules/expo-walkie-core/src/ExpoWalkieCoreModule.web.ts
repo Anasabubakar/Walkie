@@ -9,6 +9,8 @@ import {
   StateChangeEvent,
   ChannelListUpdateEvent,
   MemberUpdateEvent,
+  ChannelLockedEvent,
+  ConnectedMemberPayload,
 } from './ExpoWalkieCore.types';
 
 class ExpoWalkieCoreModuleWeb extends NativeModule<{
@@ -18,10 +20,13 @@ class ExpoWalkieCoreModuleWeb extends NativeModule<{
   onChannelListUpdate: (event: ChannelListUpdateEvent) => void;
   onNetworkStatusUpdate: (event: NetworkStatusUpdateEvent) => void;
   onMemberUpdate: (event: MemberUpdateEvent) => void;
+  onChannelLocked: (event: ChannelLockedEvent) => void;
 }> {
   private activeConfig: EventConfigPayload | null = null;
   private currentChannel: string = 'ch_stage';
   private isTransmitting: boolean = false;
+  private webClientId: string = 'web_client_1';
+  private locked: boolean = false;
 
   async startHost(eventName: string, channelsJson: string): Promise<EventConfigPayload> {
     const channels: ChannelPayload[] = JSON.parse(channelsJson || '[]');
@@ -138,6 +143,37 @@ class ExpoWalkieCoreModuleWeb extends NativeModule<{
 
   revokeMember(clientId: string, reason: string): boolean {
     return true;
+  }
+
+  getClientId(): string {
+    return this.webClientId;
+  }
+
+  isChannelLocked(): boolean {
+    return this.locked;
+  }
+
+  lockMemberChannel(targetDeviceId: string, channelId: string | null, locked: boolean): boolean {
+    this.locked = locked;
+    if (locked && channelId) {
+      this.currentChannel = channelId;
+      this.emit('onChannelLocked', { channelId, channelName: channelId, locked: true });
+    } else {
+      this.emit('onChannelLocked', { channelId: this.currentChannel, channelName: '', locked: false });
+    }
+    return true;
+  }
+
+  getConnectedMembers(): ConnectedMemberPayload[] {
+    return [
+      {
+        deviceId: this.webClientId,
+        displayName: 'Web Crew',
+        channelId: this.currentChannel,
+        lockedChannel: this.locked ? this.currentChannel : null,
+        role: 'crew',
+      },
+    ];
   }
 }
 
