@@ -53,3 +53,4 @@ build/
 *.apk
 *.aab
 *.apk.sha256
+*.node
