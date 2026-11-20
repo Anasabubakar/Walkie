@@ -148,6 +148,22 @@ impl ClientCallbacks for JniClientCallbacks {
         });
     }
 
+    fn on_channel_locked(&self, channel_id: &str, channel_name: &str, locked: bool) {
+        call_jvm(|env, obj| {
+            let j_ch = env.new_string(channel_id)?;
+            let j_name = env.new_string(channel_name)?;
+            let j_locked = if locked { JNI_TRUE } else { JNI_FALSE };
+
+            env.call_method(
+                obj,
+                "onChannelLocked",
+                "(Ljava/lang/String;Ljava/lang/String;Z)V",
+                &[(&j_ch).into(), (&j_name).into(), j_locked.into()],
+            )?;
+            Ok(())
+        });
+    }
+
     fn on_incoming_audio_frame(&self, frame: &[u8]) {
         call_jvm(|env, obj| {
             let j_bytes = env.byte_array_from_slice(frame)?;
@@ -312,9 +328,12 @@ pub extern "system" fn Java_expo_modules_walkiecore_ExpoWalkieCoreNative_nativeS
     _env: JNIEnv,
     _class: JClass,
 ) -> jboolean {
+    let rt = get_runtime();
     let mut s_lock = HOST_SERVER.lock().unwrap();
     if let Some(server) = s_lock.take() {
-        server.stop();
+        rt.block_on(async move {
+            server.stop().await;
+        });
     }
     JNI_TRUE
 }
@@ -527,5 +546,66 @@ pub extern "system" fn Java_expo_modules_walkiecore_ExpoWalkieCoreNative_nativeG
         env.new_string(diag_json).unwrap().into_raw()
     } else {
         env.new_string("{}").unwrap().into_raw()
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_expo_modules_walkiecore_ExpoWalkieCoreNative_nativeLockMemberChannel(
+    mut env: JNIEnv,
+    _class: JClass,
+    target_device_id: JString,
+    channel_id: JString,
+    locked: jboolean,
+) -> jboolean {
+    let target_str: String = env.get_string(&target_device_id).map(|s| s.into()).unwrap_or_default();
+    let ch_str: String = env.get_string(&channel_id).map(|s| s.into()).unwrap_or_default();
+    let is_locked = locked == JNI_TRUE;
+    let rt = get_runtime();
+
+    let s_lock = HOST_SERVER.lock().unwrap();
+    if let Some(ref server) = *s_lock {
+        let s_clone = Arc::clone(server);
+        let ch_ref = if is_locked && !ch_str.is_empty() {
+            Some(ch_str.as_str())
+        } else {
+            None
+        };
+        rt.block_on(async move {
+            s_clone.lock_member_channel(&target_str, ch_ref).await;
+        });
+        JNI_TRUE
+    } else {
+        JNI_FALSE
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_expo_modules_walkiecore_ExpoWalkieCoreNative_nativeGetConnectedMembers(
+    env: JNIEnv,
+    _class: JClass,
+) -> jstring {
+    let rt = get_runtime();
+    let s_lock = HOST_SERVER.lock().unwrap();
+    if let Some(ref server) = *s_lock {
+        let s_clone = Arc::clone(server);
+        let members_json = rt.block_on(async move {
+            s_clone.get_connected_members_json().await
+        });
+        env.new_string(members_json).unwrap().into_raw()
+    } else {
+        env.new_string("[]").unwrap().into_raw()
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_expo_modules_walkiecore_ExpoWalkieCoreNative_nativeIsChannelLocked(
+    _env: JNIEnv,
+    _class: JClass,
+) -> jboolean {
+    let c_lock = CLIENT_ENGINE.lock().unwrap();
+    if let Some(ref client) = *c_lock {
+        if client.is_locked() { JNI_TRUE } else { JNI_FALSE }
+    } else {
+        JNI_FALSE
     }
 }
