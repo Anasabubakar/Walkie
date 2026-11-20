@@ -1,0 +1,189 @@
+package expo.modules.walkiecore.service
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.net.wifi.WifiManager
+import android.os.Build
+import android.os.IBinder
+import android.os.PowerManager
+import android.util.Log
+import androidx.core.app.NotificationCompat
+
+class WalkieDutyService : Service() {
+
+    companion object {
+        private const val TAG = "WalkieDutyService"
+        const val CHANNEL_ID = "walkie_duty_channel"
+        const val NOTIFICATION_ID = 1001
+
+        const val ACTION_START_SERVICE = "expo.modules.walkiecore.ACTION_START"
+        const val ACTION_STOP_SERVICE = "expo.modules.walkiecore.ACTION_STOP"
+        const val ACTION_TOGGLE_TALK = "expo.modules.walkiecore.ACTION_TOGGLE_TALK"
+        const val ACTION_UPDATE_STATE = "expo.modules.walkiecore.ACTION_UPDATE_STATE"
+
+        var instance: WalkieDutyService? = null
+            private set
+
+        var isTalkingState: Boolean = false
+            private set
+
+        // Handler hook provided by WalkieCoreModule
+        var onLockScreenTalkToggled: (() -> Unit)? = null
+    }
+
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var wifiLock: WifiManager.WifiLock? = null
+    private var currentChannelName: String = "Stage"
+    private var activeSpeakerName: String? = null
+    private var isConnected: Boolean = true
+
+    override fun onCreate() {
+        super.onCreate()
+        instance = this
+        createNotificationChannel()
+        acquireLocks()
+        Log.i(TAG, "WalkieDutyService created and locks acquired")
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            ACTION_STOP_SERVICE -> {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                stopSelf()
+                return START_NOT_STICKY
+            }
+            ACTION_TOGGLE_TALK -> {
+                Log.i(TAG, "Lock screen talk action triggered")
+                onLockScreenTalkToggled?.invoke()
+            }
+            ACTION_UPDATE_STATE -> {
+                currentChannelName = intent.getStringExtra("channel_name") ?: currentChannelName
+                activeSpeakerName = intent.getStringExtra("speaker_name")
+                isConnected = intent.getBooleanExtra("is_connected", true)
+                isTalkingState = intent.getBooleanExtra("is_talking", false)
+                updateNotification()
+            }
+            else -> {
+                startForeground(NOTIFICATION_ID, buildNotification())
+            }
+        }
+        return START_STICKY
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        releaseLocks()
+        instance = null
+        Log.i(TAG, "WalkieDutyService destroyed and locks released")
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Walkie Active Duty",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Keeps Walkie connected to venue radio channels while locked"
+                setShowBadge(false)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            }
+            val nm = getSystemService(NotificationManager::class.java)
+            nm.createNotificationChannel(channel)
+        }
+    }
+
+    private fun buildNotification(): Notification {
+        val toggleIntent = Intent(this, WalkieLockScreenReceiver::class.java).apply {
+            action = ACTION_TOGGLE_TALK
+        }
+        val togglePending = PendingIntent.getBroadcast(
+            this,
+            0,
+            toggleIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val buttonLabel = if (isTalkingState) "STOP TRANSMITTING" else "HOLD / TAP TO TALK"
+
+        val statusText = when {
+            !isConnected -> "Reconnecting to venue host..."
+            isTalkingState -> "You are transmitting"
+            activeSpeakerName != null -> "Receiving: $activeSpeakerName"
+            else -> "Connected • Floor Open"
+        }
+
+        val notifIcon = resources.getIdentifier("ic_stat_walkie", "drawable", packageName).let {
+            if (it != 0) it else android.R.drawable.ic_btn_speak_now
+        }
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Walkie • $currentChannelName")
+            .setContentText(statusText)
+            .setSmallIcon(notifIcon)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .addAction(notifIcon, buttonLabel, togglePending)
+            .build()
+    }
+
+    fun updateNotificationState(channelName: String, speakerName: String?, connected: Boolean, talking: Boolean) {
+        currentChannelName = channelName
+        activeSpeakerName = speakerName
+        isConnected = connected
+        isTalkingState = talking
+        updateNotification()
+    }
+
+    private fun updateNotification() {
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.notify(NOTIFICATION_ID, buildNotification())
+    }
+
+    private fun acquireLocks() {
+        try {
+            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Walkie:DutyServiceWakeLock").apply {
+                acquire()
+            }
+
+            val wm = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+            wifiLock = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                wm.createWifiLock(WifiManager.WIFI_MODE_FULL_LOW_LATENCY, "Walkie:WifiLowLatencyLock")
+            } else {
+                @Suppress("DEPRECATION")
+                wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "Walkie:WifiHighPerfLock")
+            }.apply {
+                acquire()
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to acquire locks: ${e.message}")
+        }
+    }
+
+    private fun releaseLocks() {
+        try {
+            if (wakeLock?.isHeld == true) wakeLock?.release()
+            if (wifiLock?.isHeld == true) wifiLock?.release()
+        } catch (e: Exception) {
+            Log.w(TAG, "Error releasing locks: ${e.message}")
+        }
+    }
+}
+
+class WalkieLockScreenReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == WalkieDutyService.ACTION_TOGGLE_TALK) {
+            WalkieDutyService.onLockScreenTalkToggled?.invoke()
+        }
+    }
+}
