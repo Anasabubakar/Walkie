@@ -118,11 +118,11 @@ export class FloorStateMachine {
    * Received FLOOR_GRANT from host.
    */
   public handleFloorGrant(grant: FloorGrantMsg): void {
-    // Only accept if we are currently REQUESTING and the reqId matches!
+    // Only accept if we are currently REQUESTING and the reqId matches (if provided)
     if (
       this.state !== 'REQUESTING' ||
-      this.pendingReqId !== grant.reqId ||
-      this.currentChannelId !== grant.channelId
+      (grant.reqId && this.pendingReqId && this.pendingReqId !== grant.reqId) ||
+      (grant.channelId && this.currentChannelId !== grant.channelId)
     ) {
       // Stale or already released grant. Release it back to host to avoid orphan!
       this.callbacks.sendFloorRelease(grant.channelId, grant.leaseId);
