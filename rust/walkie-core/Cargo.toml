@@ -2,6 +2,9 @@
 name = "walkie-core"
 version = "0.1.0"
 edition = "2021"
+authors = ["Anas Abubakar <anasabubakar7000@gmail.com>"]
+license = "MIT"
+description = "High-performance zero-WAN audio engine for Walkie"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
