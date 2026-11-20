@@ -86,25 +86,34 @@ impl FloorManager {
         let state = self.get_channel_state(channel_id);
 
         if let Some(ref current) = state.current_grant {
-            if current.speaker_id == device_id {
-                // Device already holds floor on this channel; return existing grant
-                return FloorRequestOutcome::Granted(current.clone());
-            }
+            let is_expired = now_ms >= current.expires_at_ms
+                || (current.last_audio_ms > 0
+                    && now_ms.saturating_sub(current.last_audio_ms) > ORPHAN_LEASE_TIMEOUT_MS);
 
-            // Floor is currently occupied by another speaker
-            // Ensure request isn't already queued
-            if !state.queue.iter().any(|req| req.device_id == device_id) {
-                state.queue.push_back(PendingFloorRequest {
-                    req_id: req_id.to_string(),
-                    device_id: device_id.to_string(),
-                    display_name: display_name.to_string(),
-                });
-            }
+            if !is_expired {
+                if current.speaker_id == device_id {
+                    // Device already holds floor on this channel; return existing grant
+                    return FloorRequestOutcome::Granted(current.clone());
+                }
 
-            return FloorRequestOutcome::Busy {
-                speaker_id: current.speaker_id.clone(),
-                speaker_name: current.speaker_name.clone(),
-            };
+                // Floor is currently occupied by another speaker
+                // Ensure request isn't already queued
+                if !state.queue.iter().any(|req| req.device_id == device_id) {
+                    state.queue.push_back(PendingFloorRequest {
+                        req_id: req_id.to_string(),
+                        device_id: device_id.to_string(),
+                        display_name: display_name.to_string(),
+                    });
+                }
+
+                return FloorRequestOutcome::Busy {
+                    speaker_id: current.speaker_id.clone(),
+                    speaker_name: current.speaker_name.clone(),
+                };
+            } else {
+                // Inline cleanup of expired grant
+                state.current_grant = None;
+            }
         }
 
         // Channel is idle; grant floor immediately
@@ -141,7 +150,13 @@ impl FloorManager {
         let is_current = state
             .current_grant
             .as_ref()
-            .map(|g| g.lease_id == lease_id && g.speaker_id == device_id)
+            .map(|g| {
+                g.speaker_id == device_id
+                    && (lease_id.is_empty()
+                        || g.lease_id == lease_id
+                        || lease_id.starts_with("orphan_")
+                        || lease_id == "native_lease")
+            })
             .unwrap_or(false);
 
         if !is_current {
@@ -173,8 +188,7 @@ impl FloorManager {
         }
     }
 
-    /// Validates whether a device is currently permitted to transmit audio on a channel.
-    /// If valid, updates last_audio_ms.
+    /// Verifies if audio from device_id is authorized on channel_id with current epoch.
     pub fn on_audio_received(
         &mut self,
         channel_id: &str,
@@ -182,22 +196,18 @@ impl FloorManager {
         epoch: u32,
         now_ms: u64,
     ) -> bool {
-        let state = match self.channels.get_mut(channel_id) {
-            Some(s) => s,
-            None => return false,
-        };
-
-        if let Some(ref mut grant) = state.current_grant {
-            if grant.speaker_id == device_id && grant.epoch == epoch {
-                grant.last_audio_ms = now_ms;
-                return true;
+        if let Some(state) = self.channels.get_mut(channel_id) {
+            if let Some(ref mut grant) = state.current_grant {
+                if grant.speaker_id == device_id && grant.epoch == epoch {
+                    grant.last_audio_ms = now_ms;
+                    return true;
+                }
             }
         }
         false
     }
 
-    /// Checks for expired grants: max 30s floor duration or 2s orphan audio timeout.
-    /// Returns list of (revoked_grant, reason, promoted_next_grant).
+    /// Housekeeping loop tick: checks all channels for 30s max duration or 2s orphan timeout.
     pub fn check_timeouts(
         &mut self,
         now_ms: u64,
@@ -206,17 +216,22 @@ impl FloorManager {
         let mut expired = Vec::new();
 
         for (channel_id, state) in self.channels.iter_mut() {
-            let mut timeout_reason = None;
+            let mut should_revoke = false;
+            let mut reason = "LEASE_EXPIRED_MAX_DURATION";
 
             if let Some(ref grant) = state.current_grant {
                 if now_ms >= grant.expires_at_ms {
-                    timeout_reason = Some("LEASE_EXPIRED_MAX_DURATION");
-                } else if now_ms > grant.last_audio_ms + ORPHAN_LEASE_TIMEOUT_MS {
-                    timeout_reason = Some("LEASE_EXPIRED_ORPHAN_AUDIO");
+                    should_revoke = true;
+                    reason = "LEASE_EXPIRED_MAX_DURATION";
+                } else if grant.last_audio_ms > 0
+                    && now_ms.saturating_sub(grant.last_audio_ms) > ORPHAN_LEASE_TIMEOUT_MS
+                {
+                    should_revoke = true;
+                    reason = "LEASE_EXPIRED_ORPHAN_AUDIO";
                 }
             }
 
-            if let Some(reason) = timeout_reason {
+            if should_revoke {
                 let revoked = state.current_grant.take().unwrap();
                 let next_grant = if let Some(next_req) = state.queue.pop_front() {
                     let next_lease = format!("lease_{}", Uuid::new_v4().simple());
